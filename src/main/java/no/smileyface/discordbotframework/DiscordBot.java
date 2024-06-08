@@ -4,8 +4,6 @@ import java.nio.file.NoSuchFileException;
 import java.util.Collection;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.managers.Presence;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
@@ -41,9 +39,6 @@ public final class DiscordBot {
         jda.awaitReady();
         CommandListUpdateAction cmds = jda.updateCommands();
         cmds.addCommands(commands.stream().map(BotCommand::getData).toList()).queue();
-
-        Presence botPresence = jda.getPresence();
-        botPresence.setActivity(Activity.playing("/status"));
     }
 
     public JDA getJda() {
