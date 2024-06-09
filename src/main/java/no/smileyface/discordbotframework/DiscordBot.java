@@ -10,10 +10,12 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import no.smileyface.discordbotframework.entities.BotCommand;
 
 /**
- * Top-level class for the discord bot.
+ * Utility class for creating the discord bot.
  */
 public final class DiscordBot {
-    private final JDA jda;
+    private DiscordBot() {
+        throw new IllegalStateException("Utility class");
+    }
 
     /**
      * Creates the discord bot.
@@ -21,7 +23,7 @@ public final class DiscordBot {
      * @throws NoSuchFileException  If the token file for the active bot is not found
      * @throws InterruptedException If the bot is interrupted while starting
      */
-    public DiscordBot(
+    public static JDA create(
             BotListener botListener,
             Collection<BotCommand> commands
     ) throws NoSuchFileException, InterruptedException {
@@ -30,7 +32,7 @@ public final class DiscordBot {
                 .flatMap(cmd -> cmd.getAllVariants().stream())
                 .toList();
         botListener.initializeCommands(commands);
-        jda = JDABuilder
+        JDA jda = JDABuilder
                 .createDefault(TokenManager.getActiveBot(), GatewayIntent.GUILD_VOICE_STATES)
                 .disableCache(CacheFlag.EMOJI, CacheFlag.STICKER, CacheFlag.SCHEDULED_EVENTS)
                 .addEventListeners(botListener)
@@ -39,9 +41,7 @@ public final class DiscordBot {
         jda.awaitReady();
         CommandListUpdateAction cmds = jda.updateCommands();
         cmds.addCommands(commands.stream().map(BotCommand::getData).toList()).queue();
-    }
 
-    public JDA getJda() {
         return jda;
     }
 }
