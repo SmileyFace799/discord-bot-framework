@@ -16,7 +16,7 @@ import no.smileyface.discordbotframework.misc.MultiTypeMap;
 /**
  * Represents a basic bot command. All bot commands are slash commands.
  */
-public abstract class BotCommand {
+public abstract class BotCommand<K extends BotCommand.SlashArgKey> {
     private final SlashCommandData data;
     private final Collection<Check> checks;
     private final Collection<String> nicknames;
@@ -66,12 +66,12 @@ public abstract class BotCommand {
      *         passed to the constructor.
      *         The returned collection will also include this command itself
      */
-    public Collection<BotCommand> getAllVariants() {
-        Collection<BotCommand> variations = new HashSet<>();
+    public Collection<BotCommand<K>> getAllVariants() {
+        Collection<BotCommand<K>> variations = new HashSet<>();
         variations.add(this);
         nicknames.forEach(nickname -> {
             SlashCommandData commandData = getData();
-            variations.add(new BotCommand(Commands
+            variations.add(new BotCommand<>(Commands
                     .slash(nickname, "Shortcut for /" + commandData.getName())
                     .addOptions(commandData.getOptions())
                     .setGuildOnly(commandData.isGuildOnly())
@@ -79,7 +79,7 @@ public abstract class BotCommand {
                     .setNSFW(commandData.isNSFW())
             ) {
                 @Override
-                public MultiTypeMap<? extends SlashArgKey> getSlashArgs(
+                public MultiTypeMap<K> getSlashArgs(
                         SlashCommandInteractionEvent event
                 ) {
                     return BotCommand.this.getSlashArgs(event);
@@ -88,7 +88,7 @@ public abstract class BotCommand {
                 @Override
                 protected void execute(
                         IReplyCallback event,
-                        MultiTypeMap<? extends SlashArgKey> slashArgs
+                        MultiTypeMap<K> slashArgs
                 ) {
                     BotCommand.this.execute(event, slashArgs);
                 }
@@ -111,7 +111,7 @@ public abstract class BotCommand {
      * @return Slash command arguments, organized into a map.
      *         There is no guarantee that this map is modifiable
      */
-    public MultiTypeMap<? extends SlashArgKey> getSlashArgs(SlashCommandInteractionEvent event) {
+    public MultiTypeMap<K> getSlashArgs(SlashCommandInteractionEvent event) {
         return new MultiTypeMap<>();
     }
 
@@ -122,7 +122,7 @@ public abstract class BotCommand {
      */
     protected abstract void execute(
             IReplyCallback event,
-            MultiTypeMap<? extends SlashArgKey> slashArgs
+            MultiTypeMap<K> slashArgs
     );
 
     private void runChecks(IReplyCallback event) throws ChecksFailedException {
@@ -142,7 +142,7 @@ public abstract class BotCommand {
      * @param event The {@link IReplyCallback} containing the command's invocation context
      * @param slashArgs Any additional arguments passed by the user in the invocation process
      */
-    public final void run(IReplyCallback event, MultiTypeMap<? extends SlashArgKey> slashArgs) {
+    public final void run(IReplyCallback event, MultiTypeMap<K> slashArgs) {
         try {
             runChecks(event);
             execute(event, slashArgs);
