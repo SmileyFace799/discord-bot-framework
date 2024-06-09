@@ -79,12 +79,17 @@ public abstract class BotCommand {
                     .setNSFW(commandData.isNSFW())
             ) {
                 @Override
-                public MultiTypeMap<SlashArgKey> getSlashArgs(SlashCommandInteractionEvent event) {
+                public MultiTypeMap<? extends SlashArgKey> getSlashArgs(
+                        SlashCommandInteractionEvent event
+                ) {
                     return BotCommand.this.getSlashArgs(event);
                 }
 
                 @Override
-                protected void execute(IReplyCallback event, MultiTypeMap<SlashArgKey> slashArgs) {
+                protected void execute(
+                        IReplyCallback event,
+                        MultiTypeMap<? extends SlashArgKey> slashArgs
+                ) {
                     BotCommand.this.execute(event, slashArgs);
                 }
             });
@@ -106,7 +111,7 @@ public abstract class BotCommand {
      * @return Slash command arguments, organized into a map.
      *         There is no guarantee that this map is modifiable
      */
-    public MultiTypeMap<SlashArgKey> getSlashArgs(SlashCommandInteractionEvent event) {
+    public MultiTypeMap<? extends SlashArgKey> getSlashArgs(SlashCommandInteractionEvent event) {
         return new MultiTypeMap<>();
     }
 
@@ -115,7 +120,10 @@ public abstract class BotCommand {
      *
      * @param event The command event containing contextual information on the executed command
      */
-    protected abstract void execute(IReplyCallback event, MultiTypeMap<SlashArgKey> slashArgs);
+    protected abstract void execute(
+            IReplyCallback event,
+            MultiTypeMap<? extends SlashArgKey> slashArgs
+    );
 
     private void runChecks(IReplyCallback event) throws ChecksFailedException {
         for (Check check : checks) {
@@ -134,7 +142,7 @@ public abstract class BotCommand {
      * @param event The {@link IReplyCallback} containing the command's invocation context
      * @param slashArgs Any additional arguments passed by the user in the invocation process
      */
-    public final void run(IReplyCallback event, MultiTypeMap<SlashArgKey> slashArgs) {
+    public final void run(IReplyCallback event, MultiTypeMap<? extends SlashArgKey> slashArgs) {
         try {
             runChecks(event);
             execute(event, slashArgs);
