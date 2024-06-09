@@ -155,5 +155,9 @@ public abstract class BotCommand {
      * A generic interface for slash arg keys. Primarily exists so extending classes can
      * create an enum of keys, and have the enum class implement this.
      */
-    public interface SlashArgKey {}
+    public interface SlashArgKey {
+        default String str() {
+            return this.toString().replace("_", "").toLowerCase();
+        }
+    }
 }
