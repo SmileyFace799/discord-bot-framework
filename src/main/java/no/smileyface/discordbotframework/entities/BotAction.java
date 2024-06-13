@@ -2,6 +2,7 @@ package no.smileyface.discordbotframework.entities;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -34,6 +35,30 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
         this.modal = modal;
         this.checks = checks == null ? Set.of() : Arrays.stream(checks).toList();
     }
+
+	protected BotAction(ActionCommand<K> command, Check... checks) {
+		this(command, null, null, checks);
+	}
+
+	protected BotAction(ActionButton button, Check... checks) {
+		this(null, button, null, checks);
+	}
+
+	protected BotAction(ActionModal<K> modal, Check... checks) {
+		this(null, null, modal, checks);
+	}
+
+	protected BotAction(ActionCommand<K> command, ActionButton button, Check... checks) {
+		this(command, button, null, checks);
+	}
+
+	protected BotAction(ActionCommand<K> command, ActionModal<K> modal, Check... checks) {
+		this(command, null, modal, checks);
+	}
+
+	protected BotAction(ActionButton button, ActionModal<K> modal, Check... checks) {
+		this(null, button, modal, checks);
+	}
 
     public final ActionCommand<K> getCommand() {
         return command;
@@ -78,12 +103,12 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 	 */
 	public final boolean belongsTo(IReplyCallback event) {
 		return switch (event) {
-			case SlashCommandInteractionEvent slashEvent -> command
+			case SlashCommandInteractionEvent slashEvent -> command != null && command
 					.hasVariant(slashEvent.getName());
-			case ModalInteractionEvent modalEvent -> modal.getId()
+			case ModalInteractionEvent modalEvent -> modal != null && modal.getId()
 					.equalsIgnoreCase(modalEvent.getModalId());
-			case ButtonInteractionEvent buttonEvent -> button.getId() != null && button.getId()
-					.equalsIgnoreCase(buttonEvent.getComponentId());
+			case ButtonInteractionEvent buttonEvent -> button != null && button.getId() != null
+					&& button.getId().equalsIgnoreCase(buttonEvent.getComponentId());
 			default -> false;
 		};
 	}
@@ -106,16 +131,31 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
         try {
             runChecks(event);
             MultiTypeMap<K> args = switch (event) {
-                case SlashCommandInteractionEvent slashEvent -> command.getSlashArgs(slashEvent);
-                case ModalInteractionEvent modalEvent -> modal.getModalArgs(modalEvent);
+                case SlashCommandInteractionEvent slashEvent -> command == null
+						? new MultiTypeMap<>()
+						: command.getSlashArgs(slashEvent);
+                case ModalInteractionEvent modalEvent -> modal == null ? new MultiTypeMap<>()
+						: modal.getModalArgs(modalEvent);
                 default -> new MultiTypeMap<>();
             };
             execute(
                     event,
                     args,
-                    allActions.stream().map(BotAction::getCommand).toList(),
-                    allActions.stream().map(BotAction::getButton).toList(),
-                    allActions.stream().map(BotAction::getModal).toList()
+                    allActions
+							.stream()
+							.map(BotAction::getCommand)
+							.filter(Objects::nonNull)
+							.toList(),
+                    allActions
+							.stream()
+							.map(BotAction::getButton)
+							.filter(Objects::nonNull)
+							.toList(),
+                    allActions
+							.stream()
+							.map(BotAction::getModal)
+							.filter(Objects::nonNull)
+							.toList()
             );
         } catch (ChecksFailedException cfe) {
             if (event.isAcknowledged()) {
