@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ActionManager extends ListenerAdapter {
 	private final Collection<? extends BotAction<? extends BotAction.ArgKey>> actions;
+	private final InputRecord inputs;
 
 	/**
 	 * Constructor.
@@ -34,6 +35,7 @@ public class ActionManager extends ListenerAdapter {
 	 */
 	public ActionManager(Collection<? extends BotAction<? extends BotAction.ArgKey>> actions) {
 		this.actions = actions;
+		this.inputs = new InputRecord(actions);
 	}
 
 	/**
@@ -68,7 +70,7 @@ public class ActionManager extends ListenerAdapter {
 
 	private void onActionEvent(IReplyCallback event) {
 		actions.stream().filter(action -> action.belongsTo(event)).findFirst().ifPresentOrElse(
-				action -> action.run(event, actions),
+				action -> action.run(event, inputs),
 				() -> event.reply("Oops, the bot doesn't know how to respond to "
 						+ "whatever you just did. Please contact the bot owner").queue()
 		);

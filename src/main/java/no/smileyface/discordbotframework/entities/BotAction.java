@@ -2,12 +2,12 @@ package no.smileyface.discordbotframework.entities;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
+import no.smileyface.discordbotframework.InputRecord;
 import no.smileyface.discordbotframework.checks.Check;
 import no.smileyface.discordbotframework.checks.ChecksFailedException;
 import no.smileyface.discordbotframework.misc.MultiTypeMap;
@@ -16,17 +16,17 @@ import no.smileyface.discordbotframework.misc.MultiTypeMap;
  * Represents a basic bot action. Actions can be triggered through slash commands, buttons & modals.
  *
  * @param <K> Key type used for args given to
- * 			  {@link #execute(IReplyCallback, MultiTypeMap, Collection, Collection, Collection)}.
+ * 			  {@link #execute(IReplyCallback, MultiTypeMap, InputRecord)}.
  */
 public abstract class BotAction<K extends BotAction.ArgKey> {
     private final ActionCommand<K> command;
-    private final ActionButton button;
+    private final ActionButton<K> button;
     private final ActionModal<K> modal;
     private final Collection<Check> checks;
 
     protected BotAction(
             ActionCommand<K> command,
-            ActionButton button,
+            ActionButton<K> button,
             ActionModal<K> modal,
             Check... checks
     ) {
@@ -40,7 +40,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 		this(command, null, null, checks);
 	}
 
-	protected BotAction(ActionButton button, Check... checks) {
+	protected BotAction(ActionButton<K> button, Check... checks) {
 		this(null, button, null, checks);
 	}
 
@@ -48,7 +48,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 		this(null, null, modal, checks);
 	}
 
-	protected BotAction(ActionCommand<K> command, ActionButton button, Check... checks) {
+	protected BotAction(ActionCommand<K> command, ActionButton<K> button, Check... checks) {
 		this(command, button, null, checks);
 	}
 
@@ -56,7 +56,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 		this(command, null, modal, checks);
 	}
 
-	protected BotAction(ActionButton button, ActionModal<K> modal, Check... checks) {
+	protected BotAction(ActionButton<K> button, ActionModal<K> modal, Check... checks) {
 		this(null, button, modal, checks);
 	}
 
@@ -64,7 +64,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
         return command;
     }
 
-    public final ActionButton getButton() {
+    public final ActionButton<K> getButton() {
         return button;
     }
 
@@ -75,19 +75,11 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
     /**
      * The code to execute when the action is ran. This should always acknowledge the event.
      *
-     * @param event A reply-able event representing the context that triggered the action
-	 * @param args Any arguments given when upon invocation of this action
-	 * @param allCommands All registered commands
-	 * @param allButtons All registered buttons
-	 * @param allModals All registered modals
+     * @param event  A reply-able event representing the context that triggered the action
+	 * @param args   Any arguments given when upon invocation of this action
+	 * @param inputs All registered inputs
      */
-    protected abstract void execute(
-            IReplyCallback event,
-            MultiTypeMap<K> args,
-            Collection<? extends ActionCommand<? extends ArgKey>> allCommands,
-            Collection<? extends ActionButton> allButtons,
-            Collection<? extends ActionModal<? extends ArgKey>> allModals
-    );
+    protected abstract void execute(IReplyCallback event, MultiTypeMap<K> args, InputRecord inputs);
 
     private void runChecks(IReplyCallback event) throws ChecksFailedException {
         for (Check check : checks) {
@@ -121,12 +113,12 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
      *     and Executing executes the action if the checking process did not yield any exceptions.
      * </p>
      *
-     * @param event The {@link IReplyCallback} containing the command's invocation context
-	 * @param allActions Every registered action in the bot
+     * @param event  The {@link IReplyCallback} containing the command's invocation context
+	 * @param inputs Every registered input in the bot
      */
     public final void run(
             IReplyCallback event,
-            Collection<? extends BotAction<? extends ArgKey>> allActions
+            InputRecord inputs
     ) {
         try {
             runChecks(event);
@@ -138,25 +130,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 						: modal.getModalArgs(modalEvent);
                 default -> new MultiTypeMap<>();
             };
-            execute(
-                    event,
-                    args,
-                    allActions
-							.stream()
-							.map(BotAction::getCommand)
-							.filter(Objects::nonNull)
-							.toList(),
-                    allActions
-							.stream()
-							.map(BotAction::getButton)
-							.filter(Objects::nonNull)
-							.toList(),
-                    allActions
-							.stream()
-							.map(BotAction::getModal)
-							.filter(Objects::nonNull)
-							.toList()
-            );
+            execute(event, args, inputs);
         } catch (ChecksFailedException cfe) {
             if (event.isAcknowledged()) {
                 event.getHook().sendMessage(cfe.getMessage()).queue();
