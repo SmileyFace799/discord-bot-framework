@@ -1,7 +1,6 @@
 package no.smileyface.discordbotframework;
 
 import java.util.Collection;
-import java.util.Objects;
 import no.smileyface.discordbotframework.entities.ActionButton;
 import no.smileyface.discordbotframework.entities.ActionCommand;
 import no.smileyface.discordbotframework.entities.ActionModal;
@@ -16,21 +15,9 @@ public class InputRecord {
 	private final Collection<? extends ActionModal<? extends BotAction.ArgKey>> modals;
 
 	InputRecord(Collection<? extends BotAction<? extends BotAction.ArgKey>> actions) {
-		commands = actions
-				.stream()
-				.map(BotAction::getCommand)
-				.filter(Objects::nonNull)
-				.toList();
-		buttons = actions
-				.stream()
-				.map(BotAction::getButton)
-				.filter(Objects::nonNull)
-				.toList();
-		modals = actions
-				.stream()
-				.map(BotAction::getModal)
-				.filter(Objects::nonNull)
-				.toList();
+		commands = actions.stream().flatMap(action -> action.getCommands().stream()).toList();
+		buttons = actions.stream().flatMap(action -> action.getButtons().stream()).toList();
+		modals = actions.stream().flatMap(action -> action.getModals().stream()).toList();
 	}
 
 	public Collection<? extends ActionCommand<? extends BotAction.ArgKey>> getCommands() {

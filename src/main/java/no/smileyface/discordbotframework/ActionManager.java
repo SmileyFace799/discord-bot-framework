@@ -1,7 +1,6 @@
 package no.smileyface.discordbotframework;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -48,8 +47,7 @@ public class ActionManager extends ListenerAdapter {
 	final CommandListUpdateAction addCommands(CommandListUpdateAction updateAction) {
 		return updateAction.addCommands(actions
 				.stream()
-				.map(BotAction::getCommand)
-				.filter(Objects::nonNull)
+				.flatMap(action -> action.getCommands().stream())
 				.flatMap(command -> command.getAllVariants().stream())
 				.toList()
 		);

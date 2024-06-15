@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.internal.interactions.modal.ModalImpl;
+import no.smileyface.discordbotframework.misc.Identifiable;
 import no.smileyface.discordbotframework.misc.MultiTypeMap;
 
 /**
@@ -13,7 +14,7 @@ import no.smileyface.discordbotframework.misc.MultiTypeMap;
  *
  * @param <K> Key type used for args returned from {@link #getModalArgs(ModalInteractionEvent)}.
  */
-public class ActionModal<K extends BotAction.ArgKey> extends ModalImpl {
+public class ActionModal<K extends BotAction.ArgKey> extends ModalImpl implements Identifiable {
 
 	public ActionModal(String id, String title, List<ItemComponent> components) {
 		super(id, title, components.stream().map(item ->
@@ -29,5 +30,10 @@ public class ActionModal<K extends BotAction.ArgKey> extends ModalImpl {
 	 */
 	public MultiTypeMap<K> getModalArgs(ModalInteractionEvent event) {
 		return new MultiTypeMap<>();
+	}
+
+	@Override
+	public boolean identify(String id) {
+		return getId().equalsIgnoreCase(id);
 	}
 }

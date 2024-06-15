@@ -3,12 +3,13 @@ package no.smileyface.discordbotframework.entities;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.internal.interactions.component.ButtonImpl;
+import no.smileyface.discordbotframework.misc.Identifiable;
 import no.smileyface.discordbotframework.misc.MultiTypeMap;
 
 /**
  * A button for executing actions.
  */
-public class ActionButton<K extends BotAction.ArgKey> extends ButtonImpl {
+public class ActionButton<K extends BotAction.ArgKey> extends ButtonImpl implements Identifiable {
 	public ActionButton(ButtonStyle style, String id, String text) {
 		this(style, id, text, null);
 	}
@@ -25,5 +26,10 @@ public class ActionButton<K extends BotAction.ArgKey> extends ButtonImpl {
 	 */
 	public MultiTypeMap<K> createArgs() {
 		return new MultiTypeMap<>();
+	}
+
+	@Override
+	public boolean identify(String id) {
+		return getId() != null && getId().equalsIgnoreCase(id);
 	}
 }
