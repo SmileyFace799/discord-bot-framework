@@ -42,7 +42,12 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 			ActionModal<K> modal,
 			Check... checks
 	) {
-		this(Set.of(command), Set.of(button), Set.of(modal), checks);
+		this(
+				command == null ? null : Set.of(command),
+				button == null ? null : Set.of(button),
+				modal == null ? null : Set.of(modal),
+				checks
+		);
 	}
 
 	protected BotAction(ActionCommand<K> command, Check... checks) {
