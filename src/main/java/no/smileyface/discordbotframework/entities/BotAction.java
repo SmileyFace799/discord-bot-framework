@@ -164,7 +164,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 					ActionButton<K> button = belongsTo(buttonEvent);
 					yield button == null
 							? new MultiTypeMap<>()
-							: belongsTo(buttonEvent).createArgs();
+							: belongsTo(buttonEvent).createArgs(buttonEvent);
 				}
 				case ModalInteractionEvent modalEvent -> {
 					ActionModal<K> modal = belongsTo(modalEvent);
