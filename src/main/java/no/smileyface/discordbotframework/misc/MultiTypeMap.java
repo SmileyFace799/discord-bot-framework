@@ -22,4 +22,8 @@ public class MultiTypeMap<K> {
     public <V> V get(K key, Class<V> returnType) {
         return returnType.cast(valueMap.get(key));
     }
+
+    public boolean containsKey(K key) {
+        return valueMap.containsKey(key);
+    }
 }
