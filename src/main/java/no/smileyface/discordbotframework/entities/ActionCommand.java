@@ -19,7 +19,7 @@ import no.smileyface.discordbotframework.misc.MultiTypeMap;
  */
 public class ActionCommand<K extends BotAction.ArgKey> implements Identifiable {
 	private final SlashCommandData data;
-	private final Collection<String> names;
+	private final Collection<String> nicknames;
 
 	/**
 	 * Constructor.
@@ -29,10 +29,9 @@ public class ActionCommand<K extends BotAction.ArgKey> implements Identifiable {
 	 */
 	public ActionCommand(SlashCommandData data, String... nicknames) {
 		this.data = data;
-		this.names = new HashSet<>(nicknames == null
+		this.nicknames = nicknames == null
 				? Set.of()
-				: Arrays.stream(nicknames).map(String::toLowerCase).toList());
-		this.names.add(data.getName());
+				: Arrays.stream(nicknames).map(String::toLowerCase).toList();
 	}
 
 	/**
@@ -46,7 +45,7 @@ public class ActionCommand<K extends BotAction.ArgKey> implements Identifiable {
 	public final Collection<CommandData> getAllVariants() {
 		Collection<CommandData> variations = new HashSet<>();
 		variations.add(data);
-		names.forEach(nickname -> variations.add(Commands
+		nicknames.forEach(nickname -> variations.add(Commands
 				.slash(nickname, "Shortcut for /" + data.getName())
 				.addOptions(data.getOptions())
 				.setGuildOnly(data.isGuildOnly())
@@ -69,6 +68,6 @@ public class ActionCommand<K extends BotAction.ArgKey> implements Identifiable {
 
 	@Override
 	public final boolean identify(String name) {
-		return names.contains(name.toLowerCase());
+		return data.getName().equalsIgnoreCase(name) || nicknames.contains(name.toLowerCase());
 	}
 }
