@@ -31,4 +31,46 @@ public class InputRecord {
 	public Collection<? extends ActionModal<? extends BotAction.ArgKey>> getModals() {
 		return modals;
 	}
+
+	/**
+	 * Find a command by its name.
+	 *
+	 * @param commandName The name of the command to find
+	 * @return The command found, or {@code null} if not found
+	 */
+	public ActionCommand<? extends BotAction.ArgKey> findCommand(String commandName) {
+		return commands
+				.stream()
+				.filter(command -> command.identify(commandName))
+				.findFirst()
+				.orElse(null);
+	}
+
+	/**
+	 * Find a button by its ID.
+	 *
+	 * @param buttonId The ID of the button to find
+	 * @return The button found, or {@code null} if not found
+	 */
+	public ActionButton<? extends BotAction.ArgKey> findButton(String buttonId) {
+		return buttons
+				.stream()
+				.filter(button -> button.identify(buttonId))
+				.findFirst()
+				.orElse(null);
+	}
+
+	/**
+	 * Find a modal by its ID.
+	 *
+	 * @param modalId The ID of the modal to find
+	 * @return The modal found, or {@code null} if not found
+	 */
+	public ActionModal<? extends BotAction.ArgKey> findModal(String modalId) {
+		return modals
+				.stream()
+				.filter(modal -> modal.identify(modalId))
+				.findFirst()
+				.orElse(null);
+	}
 }
