@@ -137,13 +137,11 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 			throw new IllegalArgumentException("Context button cannot have \"null\" id");
 		}
 		buttons.add(button);
-		System.out.println("001");
 		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 		scheduler.schedule(
 				() -> buttons.removeIf(b -> button.getId().equals(b.getId())),
 				15, TimeUnit.MINUTES
 		);
-		System.out.println("002");
 	}
 
 	/**
@@ -205,8 +203,9 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 						(ButtonInteractionEvent) event,
 						args, inputs, buttons
 				);
+			} else {
+				execute(event, args, inputs);
 			}
-			execute(event, args, inputs);
 		} catch (ChecksFailedException cfe) {
 			if (event.isAcknowledged()) {
 				event.getHook().sendMessage(cfe.getMessage()).queue();
