@@ -69,8 +69,16 @@ public class ActionManager extends ListenerAdapter {
 	private void onActionEvent(IReplyCallback event) {
 		actions.stream().filter(action -> action.belongsTo(event)).findFirst().ifPresentOrElse(
 				action -> action.run(event, inputs),
-				() -> event.reply("Oops, the bot doesn't know how to respond to "
-						+ "whatever you just did. Please contact the bot owner").queue()
+				() -> {
+					if (event instanceof ButtonInteractionEvent buttonEvent
+							&& buttonEvent.getComponentId().startsWith("--")
+					) {
+						event.reply("This button has expired").queue();
+					} else {
+						event.reply("Oops, the bot doesn't know how to respond to "
+								+ "whatever you just did. Please contact the bot owner").queue();
+					}
+				}
 		);
 	}
 

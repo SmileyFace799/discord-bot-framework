@@ -3,6 +3,9 @@ package no.smileyface.discordbotframework.entities;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -86,21 +89,6 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 		return modals;
 	}
 
-	/**
-	 * The code to execute when the action is ran. This should always acknowledge the event.
-	 *
-	 * @param event  A reply-able event representing the context that triggered the action
-	 * @param args   Any arguments given when upon invocation of this action
-	 * @param inputs All registered inputs
-	 */
-	protected abstract void execute(IReplyCallback event, MultiTypeMap<K> args, InputRecord inputs);
-
-	private void runChecks(IReplyCallback event) throws ChecksFailedException {
-		for (Check check : checks) {
-			check.check(event);
-		}
-	}
-
 	private ActionCommand<K> belongsTo(SlashCommandInteractionEvent event) {
 		return commands
 				.stream()
@@ -141,6 +129,34 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 		};
 	}
 
+	final void registerContextButton(ContextButton<K> button) {
+		if (button.getId() == null) {
+			throw new IllegalArgumentException("Context button cannot have \"null\" id");
+		}
+		buttons.add(button);
+		try (ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor()) {
+			scheduler.schedule(
+					() -> buttons.removeIf(b -> button.getId().equals(b.getId())),
+					15, TimeUnit.MINUTES
+			);
+		}
+	}
+
+	/**
+	 * The code to execute when the action is ran. This should always acknowledge the event.
+	 *
+	 * @param event  A reply-able event representing the context that triggered the action
+	 * @param args   Any arguments given when upon invocation of this action
+	 * @param inputs All registered inputs
+	 */
+	protected abstract void execute(IReplyCallback event, MultiTypeMap<K> args, InputRecord inputs);
+
+	private void runChecks(IReplyCallback event) throws ChecksFailedException {
+		for (Check check : checks) {
+			check.check(event);
+		}
+	}
+
 	/**
 	 * Runs the action.
 	 * <p>
@@ -158,27 +174,34 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 	) {
 		try {
 			runChecks(event);
+			ActionButton<K> button = null;
 			MultiTypeMap<K> args = switch (event) {
 				case SlashCommandInteractionEvent slashEvent -> {
 					ActionCommand<K> command = belongsTo(slashEvent);
 					yield command == null
 							? new MultiTypeMap<>()
-							: belongsTo(slashEvent).getSlashArgs(slashEvent);
+							: command.getSlashArgs(slashEvent);
 				}
 				case ButtonInteractionEvent buttonEvent -> {
-					ActionButton<K> button = belongsTo(buttonEvent);
+					button = belongsTo(buttonEvent);
 					yield button == null
 							? new MultiTypeMap<>()
-							: belongsTo(buttonEvent).createArgs(buttonEvent);
+							: button.createArgs(buttonEvent);
 				}
 				case ModalInteractionEvent modalEvent -> {
 					ActionModal<K> modal = belongsTo(modalEvent);
 					yield modal == null
 							? new MultiTypeMap<>()
-							: belongsTo(modalEvent).getModalArgs(modalEvent);
+							: modal.getModalArgs(modalEvent);
 				}
 				default -> new MultiTypeMap<>();
 			};
+			if (button instanceof ContextButton<K> contextButton) {
+				contextButton.clickedThenDelete(
+						(ButtonInteractionEvent) event,
+						args, inputs, buttons
+				);
+			}
 			execute(event, args, inputs);
 		} catch (ChecksFailedException cfe) {
 			if (event.isAcknowledged()) {
