@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -213,6 +215,11 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 			String message = "The bot ran into an internal error, "
 					+ String.format("please report this issue to the bot owner (%s)",
 					e.getMessage()
+			);
+			Logger.getLogger(getClass().getName()).log(
+					Level.WARNING,
+					message,
+					e
 			);
 			if (event.isAcknowledged()) {
 				event.getHook().sendMessage(message).queue();
