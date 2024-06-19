@@ -2,6 +2,7 @@ package no.smileyface.discordbotframework.entities;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -36,7 +37,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 			Check... checks
 	) {
 		this.commands = commands == null ? Set.of() : commands;
-		this.buttons = buttons == null ? Set.of() : buttons;
+		this.buttons = new HashSet<>(buttons == null ? Set.of() : buttons);
 		this.modals = modals == null ? Set.of() : modals;
 		this.checks = checks == null ? Set.of() : Arrays.stream(checks).toList();
 	}
