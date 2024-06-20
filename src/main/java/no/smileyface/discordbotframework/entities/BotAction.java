@@ -25,6 +25,7 @@ import no.smileyface.discordbotframework.misc.MultiTypeMap;
  *            {@link #execute(IReplyCallback, MultiTypeMap, InputRecord)}.
  */
 public abstract class BotAction<K extends BotAction.ArgKey> {
+	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 	private final Collection<ActionCommand<K>> commands;
 	private final Collection<ActionButton<K>> buttons;
 	private final Collection<ActionModal<K>> modals;
@@ -137,7 +138,6 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 			throw new IllegalArgumentException("Context button cannot have \"null\" id");
 		}
 		buttons.add(button);
-		ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 		scheduler.schedule(
 				() -> buttons.removeIf(b -> button.getId().equals(b.getId())),
 				15, TimeUnit.MINUTES
