@@ -73,10 +73,11 @@ public class ActionManager extends ListenerAdapter {
 					if (event instanceof ButtonInteractionEvent buttonEvent
 							&& buttonEvent.getComponentId().startsWith("--")
 					) {
-						event.reply("This button has expired").queue();
+						event.reply("This button has expired").setEphemeral(true).queue();
 					} else {
 						event.reply("Oops, the bot doesn't know how to respond to "
-								+ "whatever you just did. Please contact the bot owner").queue();
+								+ "whatever you just did. Please contact the bot owner"
+						).setEphemeral(true).queue();
 					}
 				}
 		);
