@@ -1,6 +1,7 @@
 package no.smileyface.discordbotframework;
 
 import java.nio.file.NoSuchFileException;
+import java.util.Arrays;
 import java.util.Collection;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -18,18 +19,19 @@ public final class DiscordBot {
 
 	/**
 	 * Creates the discord bot. To create a bot with a custom
-	 * {@link ActionManager}, use {@link #create(ActionManager)} instead.
+	 * {@link ActionManager}, use {@link #create(ActionManager, GatewayIntent...)} instead.
 	 *
 	 * @param actions Collection of actions to create the bot with.
 	 * @return The created bot JDA instance
 	 * @throws NoSuchFileException  If the token file for the active bot is not found
 	 * @throws InterruptedException If the bot is interrupted while starting
-	 * @see #create(ActionManager)
+	 * @see #create(ActionManager, GatewayIntent...)
 	 */
 	public static JDA create(
-			Collection<? extends BotAction<? extends BotAction.ArgKey>> actions
+			Collection<? extends BotAction<? extends BotAction.ArgKey>> actions,
+			GatewayIntent... intents
 	) throws NoSuchFileException, InterruptedException {
-		return create(new ActionManager(actions));
+		return create(new ActionManager(actions), intents);
 	}
 
 	/**
@@ -39,13 +41,14 @@ public final class DiscordBot {
 	 * @return The created bot JDA instance
 	 * @throws NoSuchFileException  If the token file for the active bot is not found
 	 * @throws InterruptedException If the bot is interrupted while starting
-	 * @see #create(Collection)
+	 * @see #create(Collection, GatewayIntent...)
 	 */
 	public static JDA create(
-			ActionManager actionManager
+			ActionManager actionManager,
+			GatewayIntent... intents
 	) throws NoSuchFileException, InterruptedException {
 		JDA jda = JDABuilder
-				.createDefault(TokenManager.getActiveBot(), GatewayIntent.GUILD_VOICE_STATES)
+				.createDefault(TokenManager.getActiveBot(), Arrays.asList(intents))
 				.disableCache(CacheFlag.EMOJI, CacheFlag.STICKER, CacheFlag.SCHEDULED_EVENTS)
 				.addEventListeners(actionManager)
 				.build();
