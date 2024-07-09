@@ -117,7 +117,7 @@ public abstract class FileInterface<T> {
 	}
 
 	protected final void save() throws IOException {
-		Files.write(path, toBytes(value));
+		Files.write(path, value == null ? new byte[]{} : toBytes(value));
 	}
 
 	protected T fromNothing() {
