@@ -47,12 +47,14 @@ public final class DiscordBot {
 			ActionManager actionManager,
 			GatewayIntent... intents
 	) throws NoSuchFileException, InterruptedException {
-		JDA jda = JDABuilder
+		JDABuilder builder = JDABuilder
 				.createDefault(TokenManager.getActiveBot(), Arrays.asList(intents))
 				.disableCache(CacheFlag.EMOJI, CacheFlag.STICKER, CacheFlag.SCHEDULED_EVENTS)
-				.addEventListeners(actionManager)
-				.build();
-
+				.addEventListeners(actionManager);
+		if (!Arrays.asList(intents).contains(GatewayIntent.GUILD_VOICE_STATES)) {
+			builder.disableCache(CacheFlag.VOICE_STATE);
+		}
+		JDA jda = builder.build();
 		jda.awaitReady();
 		actionManager.addCommands(jda.updateCommands()).queue();
 
