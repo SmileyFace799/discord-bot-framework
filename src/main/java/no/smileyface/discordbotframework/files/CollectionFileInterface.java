@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.dv8tion.jda.api.utils.IOFunction;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -24,7 +25,6 @@ public abstract class CollectionFileInterface<T>
 		implements Collection<T> {
 	private static final Logger LOGGER = Logger.getLogger(CollectionFileInterface.class.getName());
 
-	private final Collection<T> collection;
 	private final int fixedLength;
 
 	/**
@@ -51,10 +51,9 @@ public abstract class CollectionFileInterface<T>
 		super(path, false);
 		this.fixedLength = fixedLength;
 		load();
-		this.collection = get();
 	}
 
-	private <U> boolean ioSuccessOrLog(IoFunction<U, Boolean> ioFunction, U item) {
+	private <U> boolean ioSuccessOrLog(IOFunction<U, Boolean> ioFunction, U item) {
 		boolean returnValue;
 		try {
 			returnValue = ioFunction.apply(item);
@@ -65,23 +64,19 @@ public abstract class CollectionFileInterface<T>
 		return returnValue;
 	}
 
-	private interface IoFunction<U, R> {
-		R apply(U item) throws IOException;
-	}
-
 	@Override
 	public int size() {
-		return collection.size();
+		return get(Collection::size);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return collection.isEmpty();
+		return get(Collection::isEmpty);
 	}
 
 	@Override
 	public boolean contains(Object o) {
-		return collection.contains(o);
+		return get(collection -> collection.contains(o));
 	}
 
 	@NotNull
@@ -93,13 +88,13 @@ public abstract class CollectionFileInterface<T>
 	@NotNull
 	@Override
 	public Object[] toArray() {
-		return collection.toArray();
+		return get(Collection::toArray);
 	}
 
 	@NotNull
 	@Override
 	public <T1> T1[] toArray(@NotNull T1[] a) {
-		return collection.toArray(a);
+		return get(collection -> collection.toArray(a));
 	}
 
 	/**
@@ -123,11 +118,7 @@ public abstract class CollectionFileInterface<T>
 	 * @throws IOException If saving the collection to a file threw one
 	 */
 	public boolean addChecked(T t) throws IOException {
-		boolean changed = collection.add(t);
-		if (changed) {
-			save();
-		}
-		return changed;
+		return modifyAndGet(collection -> collection.add(t));
 	}
 
 	/**
@@ -151,16 +142,12 @@ public abstract class CollectionFileInterface<T>
 	 * @throws IOException If saving the collection to a file threw one
 	 */
 	public boolean removeChecked(Object o) throws IOException {
-		boolean removed = collection.remove(o);
-		if (removed) {
-			save();
-		}
-		return removed;
+		return modifyAndGet(collection -> collection.remove(o));
 	}
 
 	@Override
 	public boolean containsAll(@NotNull Collection<?> c) {
-		return collection.containsAll(c);
+		return get(collection -> collection.containsAll(c));
 	}
 
 	/**
@@ -184,11 +171,7 @@ public abstract class CollectionFileInterface<T>
 	 * @throws IOException If saving the collection to a file threw one
 	 */
 	public boolean addAllChecked(@NotNull Collection<? extends T> c) throws IOException {
-		boolean changed = collection.addAll(c);
-		if (changed) {
-			save();
-		}
-		return changed;
+		return modifyAndGet(collection -> collection.addAll(c));
 	}
 
 	/**
@@ -212,11 +195,7 @@ public abstract class CollectionFileInterface<T>
 	 * @throws IOException If saving the collection to a file threw one
 	 */
 	public boolean removeAllChecked(@NotNull Collection<?> c) throws IOException {
-		boolean changed = collection.removeAll(c);
-		if (changed) {
-			save();
-		}
-		return changed;
+		return modifyAndGet(collection -> collection.removeAll(c));
 	}
 
 	/**
@@ -240,16 +219,27 @@ public abstract class CollectionFileInterface<T>
 	 * @throws IOException If saving the collection to a file threw one
 	 */
 	public boolean retainAllChecked(@NotNull Collection<?> c) throws IOException {
-		boolean changed = collection.retainAll(c);
-		if (changed) {
-			save();
-		}
-		return changed;
+		return modifyAndGet(collection -> collection.retainAll(c));
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * <p>A call to {@link #clearChecked()} is preferred over this.</p>
+	 *
+	 * @see #clearChecked()
+	 */
 	@Override
 	public void clear() {
-		collection.clear();
+		try {
+			this.clearChecked();
+		} catch (IOException ioe) {
+			LOGGER.log(Level.WARNING, ioe.getMessage(), ioe);
+		}
+	}
+
+
+	public void clearChecked() throws IOException {
+		modify(Collection::clear);
 	}
 
 	/**
@@ -335,7 +325,7 @@ public abstract class CollectionFileInterface<T>
 		private T currentNext;
 
 		private IoIterator() {
-			this.collectionIterator = collection.iterator();
+			this.collectionIterator = get(Collection::iterator);
 		}
 
 		@Override
