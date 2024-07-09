@@ -108,7 +108,10 @@ public abstract class FileInterface<T> {
 	}
 
 	protected final void load() throws IOException {
-		set(fromBytes(Files.readAllBytes(this.path)));
+		byte[] bytes = Files.readAllBytes(this.path);
+		if (bytes.length > 0) {
+			set(fromBytes(bytes));
+		}
 	}
 
 	protected final void save() throws IOException {
