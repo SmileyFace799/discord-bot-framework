@@ -259,8 +259,13 @@ public abstract class CollectionFileInterface<T>
 	protected abstract byte[] itemToBytes(T item);
 
 	@Override
+	protected final Collection<T> fromNothing() {
+		return new HashSet<>();
+	}
+
+	@Override
 	protected final Collection<T> fromBytes(byte[] bytes) {
-		Collection<T> items = new HashSet<>();
+		Collection<T> items = fromNothing();
 		int currentPosition = 0;
 		while (currentPosition < bytes.length) {
 			int length;

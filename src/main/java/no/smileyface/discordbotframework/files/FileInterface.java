@@ -111,11 +111,17 @@ public abstract class FileInterface<T> {
 		byte[] bytes = Files.readAllBytes(this.path);
 		if (bytes.length > 0) {
 			set(fromBytes(bytes));
+		} else {
+			set(fromNothing());
 		}
 	}
 
 	protected final void save() throws IOException {
 		Files.write(path, toBytes(value));
+	}
+
+	protected T fromNothing() {
+		return null;
 	}
 
 	/**
