@@ -2,7 +2,6 @@ package no.smileyface.discordbotframework;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.function.Consumer;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -20,41 +19,22 @@ public class DiscordBot {
 	private final Node<String, String> properties;
 
 	/**
-	 * Creates the discord bot. To create a bot with a custom{@link ActionManager},
-	 * use {@link #DiscordBot(ActionManager, Consumer, GatewayIntent...)} instead.
-	 *
-	 * @param actions Collection of actions to create the bot with.
-	 * @param propertiesHook A hook that is run immediately after properties have loaded
-	 * @param intents        Any {@link GatewayIntent}s the bot requires
-	 * @throws InterruptedException If the bot is interrupted while starting
-	 * @see #DiscordBot(ActionManager, Consumer, GatewayIntent...)
-	 */
-	public DiscordBot(
-			Collection<? extends BotAction<? extends BotAction.ArgKey>> actions,
-			Consumer<Node<String, String>> propertiesHook,
-			GatewayIntent... intents
-	) throws InterruptedException, PropertyLoadException {
-		this(new ActionManager(actions), propertiesHook, intents);
-	}
-
-	/**
 	 * Creates the discord bot.
 	 *
 	 * @param actionManager The {@link ActionManager} for executing actions
-	 * @param propertiesHook A hook that is run immediately after properties have loaded
-	 * @param intents        Any {@link GatewayIntent}s the bot requires
+	 * @param properties    The properties of the bot, if they've been pre-loaded
+	 * @param intents       Any {@link GatewayIntent}s the bot requires
 	 * @throws InterruptedException If the bot is interrupted while starting
-	 * @see #DiscordBot(Collection, Consumer, GatewayIntent...)
+	 * @see #DiscordBot(ActionManager, GatewayIntent...)
+	 * @see #DiscordBot(Collection, Node, GatewayIntent...)
+	 * @see #DiscordBot(Collection, GatewayIntent...)
 	 */
 	public DiscordBot(
 			ActionManager actionManager,
-			Consumer<Node<String, String>> propertiesHook,
+			Node<String, String> properties,
 			GatewayIntent... intents
-	) throws InterruptedException, PropertyLoadException {
-		this.properties = PropertyLoader.loadProperties();
-		if (propertiesHook != null) {
-			propertiesHook.accept(properties);
-		}
+	) throws InterruptedException {
+		this.properties = properties;
 		Node<String, String> botNode = properties.getChild("bot");
 		String botToken = botNode.getChild(botNode.getChild("active").getValue()).getValue();
 
@@ -68,6 +48,63 @@ public class DiscordBot {
 		this.jda = builder.build();
 		jda.awaitReady();
 		actionManager.addCommands(jda.updateCommands()).queue();
+	}
+
+	/**
+	 * Creates the discord bot.
+	 *
+	 * @param actionManager The {@link ActionManager} for executing actions
+	 * @param intents        Any {@link GatewayIntent}s the bot requires
+	 * @throws InterruptedException If the bot is interrupted while starting
+	 * @throws PropertyLoadException If properties fail to load
+	 * @see #DiscordBot(ActionManager, Node, GatewayIntent...)
+	 * @see #DiscordBot(Collection, Node, GatewayIntent...)
+	 * @see #DiscordBot(Collection, GatewayIntent...)
+	 */
+	public DiscordBot(
+			ActionManager actionManager,
+			GatewayIntent... intents
+	) throws InterruptedException, PropertyLoadException {
+		this(actionManager, PropertyLoader.loadProperties(), intents);
+	}
+
+	/**
+	 * Creates the discord bot. To create a bot with a custom{@link ActionManager},
+	 * use {@link #DiscordBot(ActionManager, Node, GatewayIntent...)} instead.
+	 *
+	 * @param actions    Collection of actions to create the bot with.
+	 * @param properties The properties of the bot, if they've been pre-loaded
+	 * @param intents    Any {@link GatewayIntent}s the bot requires
+	 * @throws InterruptedException If the bot is interrupted while starting
+	 * @see #DiscordBot(ActionManager, Node, GatewayIntent...)
+	 * @see #DiscordBot(ActionManager, GatewayIntent...)
+	 * @see #DiscordBot(Collection, GatewayIntent...)
+	 */
+	public DiscordBot(
+			Collection<? extends BotAction<? extends BotAction.ArgKey>> actions,
+			Node<String, String> properties,
+			GatewayIntent... intents
+	) throws InterruptedException {
+		this(new ActionManager(actions), properties, intents);
+	}
+
+	/**
+	 * Creates the discord bot. To create a bot with a custom{@link ActionManager},
+	 * use {@link #DiscordBot(ActionManager, GatewayIntent...)} instead.
+	 *
+	 * @param actions Collection of actions to create the bot with.
+	 * @param intents        Any {@link GatewayIntent}s the bot requires
+	 * @throws InterruptedException If the bot is interrupted while starting
+	 * @throws PropertyLoadException If properties fail to load
+	 * @see #DiscordBot(ActionManager, Node, GatewayIntent...)
+	 * @see #DiscordBot(ActionManager, GatewayIntent...)
+	 * @see #DiscordBot(Collection, Node, GatewayIntent...)
+	 */
+	public DiscordBot(
+			Collection<? extends BotAction<? extends BotAction.ArgKey>> actions,
+			GatewayIntent... intents
+	) throws InterruptedException, PropertyLoadException {
+		this(actions, PropertyLoader.loadProperties(), intents);
 	}
 
 	public JDA getJda() {
