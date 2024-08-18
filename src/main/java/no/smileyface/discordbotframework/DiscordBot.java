@@ -2,6 +2,7 @@ package no.smileyface.discordbotframework;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Consumer;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -20,31 +21,40 @@ public class DiscordBot {
 
 	/**
 	 * Creates the discord bot. To create a bot with a custom{@link ActionManager},
-	 * use {@link #DiscordBot(ActionManager, GatewayIntent...)} instead.
+	 * use {@link #DiscordBot(ActionManager, Consumer, GatewayIntent...)} instead.
 	 *
 	 * @param actions Collection of actions to create the bot with.
+	 * @param propertiesHook A hook that is run immediately after properties have loaded
+	 * @param intents        Any {@link GatewayIntent}s the bot requires
 	 * @throws InterruptedException If the bot is interrupted while starting
-	 * @see #DiscordBot(ActionManager, GatewayIntent...)
+	 * @see #DiscordBot(ActionManager, Consumer, GatewayIntent...)
 	 */
 	public DiscordBot(
 			Collection<? extends BotAction<? extends BotAction.ArgKey>> actions,
+			Consumer<Node<String, String>> propertiesHook,
 			GatewayIntent... intents
 	) throws InterruptedException, PropertyLoadException {
-		this(new ActionManager(actions), intents);
+		this(new ActionManager(actions), propertiesHook, intents);
 	}
 
 	/**
 	 * Creates the discord bot.
 	 *
 	 * @param actionManager The {@link ActionManager} for executing actions
+	 * @param propertiesHook A hook that is run immediately after properties have loaded
+	 * @param intents        Any {@link GatewayIntent}s the bot requires
 	 * @throws InterruptedException If the bot is interrupted while starting
-	 * @see #DiscordBot(Collection, GatewayIntent...)
+	 * @see #DiscordBot(Collection, Consumer, GatewayIntent...)
 	 */
 	public DiscordBot(
 			ActionManager actionManager,
+			Consumer<Node<String, String>> propertiesHook,
 			GatewayIntent... intents
 	) throws InterruptedException, PropertyLoadException {
 		this.properties = PropertyLoader.loadProperties();
+		if (propertiesHook != null) {
+			propertiesHook.accept(properties);
+		}
 		Node<String, String> botNode = properties.getChild("bot");
 		String botToken = botNode.getChild(botNode.getChild("active").getValue()).getValue();
 
