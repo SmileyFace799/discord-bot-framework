@@ -8,8 +8,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import no.smileyface.discordbotframework.misc.Identifiable;
-import no.smileyface.discordbotframework.misc.MultiTypeMap;
+import no.smileyface.discordbotframework.data.Node;
 
 /**
  * A slash command for executing actions.
@@ -57,13 +56,13 @@ public class ActionCommand<K extends BotAction.ArgKey> implements Identifiable {
 
 	/**
 	 * Creates action arguments from a slash command event.
-	 * <p>This returns an empty map by default.</p>
+	 * <p>This returns an empty node by default.</p>
 	 *
 	 * @param event The command event representing the executed command
-	 * @return Map of action arguments
+	 * @return Node of action arguments
 	 */
-	public MultiTypeMap<K> getSlashArgs(SlashCommandInteractionEvent event) {
-		return new MultiTypeMap<>();
+	public Node<K, Object> getSlashArgs(SlashCommandInteractionEvent event) {
+		return new Node<>();
 	}
 
 	@Override

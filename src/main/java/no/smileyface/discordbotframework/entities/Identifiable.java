@@ -1,4 +1,4 @@
-package no.smileyface.discordbotframework.misc;
+package no.smileyface.discordbotframework.entities;
 
 
 /**

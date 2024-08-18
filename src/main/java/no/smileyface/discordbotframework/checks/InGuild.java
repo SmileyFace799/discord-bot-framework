@@ -9,9 +9,9 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
  */
 public class InGuild implements CheckAndReturn<Member> {
 	@Override
-	public Member checkAndReturn(IReplyCallback event) throws ChecksFailedException {
+	public Member checkAndReturn(IReplyCallback event) throws CheckFailedException {
 		if (!event.isFromGuild()) {
-			throw new ChecksFailedException("You're not in a server");
+			throw new CheckFailedException("You're not in a server");
 		}
 		return Objects.requireNonNull(event.getMember());
 	}

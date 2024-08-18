@@ -17,9 +17,9 @@ public class BotNotConnected implements Check {
 	}
 
 	@Override
-	public void check(IReplyCallback event) throws ChecksFailedException {
+	public void check(IReplyCallback event) throws CheckFailedException {
 		if (inGuild.checkAndReturn(event).getGuild().getAudioManager().isConnected()) {
-			throw new ChecksFailedException(
+			throw new CheckFailedException(
 					"The bot is already connected to another voice channel");
 		}
 	}

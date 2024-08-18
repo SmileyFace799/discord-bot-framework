@@ -4,8 +4,7 @@ import java.util.Collection;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import no.smileyface.discordbotframework.InputRecord;
-import no.smileyface.discordbotframework.misc.MultiTypeMap;
+import no.smileyface.discordbotframework.data.Node;
 
 /**
  * A button for executing context actions, that depend on a different action for their execution.
@@ -31,17 +30,15 @@ public abstract class ContextButton<K extends BotAction.ArgKey> extends ActionBu
 
 	public abstract void clicked(
 			ButtonInteractionEvent event,
-			MultiTypeMap<K> args,
-			InputRecord inputs
+			Node<K, Object> args
 	);
 
 	final synchronized void clickedThenDelete(
 			ButtonInteractionEvent event,
-			MultiTypeMap<K> args,
-			InputRecord inputs,
+			Node<K, Object> args,
 			Collection<ActionButton<K>> buttonList
 	) {
-		clicked(event, args, inputs);
+		clicked(event, args);
 		buttonList.remove(this);
 	}
 }

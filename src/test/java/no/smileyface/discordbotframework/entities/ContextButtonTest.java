@@ -3,8 +3,7 @@ package no.smileyface.discordbotframework.entities;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
-import no.smileyface.discordbotframework.InputRecord;
-import no.smileyface.discordbotframework.misc.MultiTypeMap;
+import no.smileyface.discordbotframework.data.Node;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,12 +15,11 @@ class ContextButtonTest {
 
 	@BeforeEach
 	public void beforeEach() {
-		testAction = new BotAction<>((ActionButton<BotAction.ArgKey>) null) {
+		testAction = new BotAction<>(null) {
 			@Override
 			protected void execute(
 					IReplyCallback event,
-					MultiTypeMap<ArgKey> args,
-					InputRecord inputs
+					Node<ArgKey, Object> args
 			) {
 				// Do nothing
 			}
@@ -30,8 +28,7 @@ class ContextButtonTest {
 			@Override
 			public void clicked(
 					ButtonInteractionEvent event,
-					MultiTypeMap<BotAction.ArgKey> args,
-					InputRecord inputs
+					Node<BotAction.ArgKey, Object> args
 			) {
 				// Do nothing
 			}
@@ -40,9 +37,9 @@ class ContextButtonTest {
 
 	@Test
 	void testContextButtonExecutesThenDeletes() {
-		IReplyCallback testEvent = new ButtonTestEvent(contextButton.getId());
+		IReplyCallback testEvent = MockEventFactory.makeButtonEvent(contextButton.getId());
 		assertTrue(testAction.belongsTo(testEvent));
-		testAction.run(testEvent, null);
+		testAction.run(testEvent);
 		assertFalse(testAction.belongsTo(testEvent));
 	}
 }

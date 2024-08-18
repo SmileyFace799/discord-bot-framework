@@ -6,8 +6,7 @@ import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.internal.interactions.modal.ModalImpl;
-import no.smileyface.discordbotframework.misc.Identifiable;
-import no.smileyface.discordbotframework.misc.MultiTypeMap;
+import no.smileyface.discordbotframework.data.Node;
 
 /**
  * A submittable modal window for executing actions.
@@ -23,13 +22,13 @@ public class ActionModal<K extends BotAction.ArgKey> extends ModalImpl implement
 
 	/**
 	 * Creates action arguments from a modal interaction event.
-	 * <p>This returns an empty map by default.</p>
+	 * <p>This returns an empty node by default.</p>
 	 *
 	 * @param event The modal event representing the submitted modal
-	 * @return Map of action arguments
+	 * @return Node of action arguments
 	 */
-	public MultiTypeMap<K> getModalArgs(ModalInteractionEvent event) {
-		return new MultiTypeMap<>();
+	public Node<K, Object> getModalArgs(ModalInteractionEvent event) {
+		return new Node<>();
 	}
 
 	@Override

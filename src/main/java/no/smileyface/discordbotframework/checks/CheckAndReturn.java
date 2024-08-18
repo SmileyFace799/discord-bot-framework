@@ -9,10 +9,10 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
  * @param <R> The return type of the check
  */
 public interface CheckAndReturn<R> extends Check {
-	R checkAndReturn(IReplyCallback event) throws ChecksFailedException;
+	R checkAndReturn(IReplyCallback event) throws CheckFailedException;
 
 	@Override
-	default void check(IReplyCallback event) throws ChecksFailedException {
+	default void check(IReplyCallback event) throws CheckFailedException {
 		checkAndReturn(event);
 	}
 }
