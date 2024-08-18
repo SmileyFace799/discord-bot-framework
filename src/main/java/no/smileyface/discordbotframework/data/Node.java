@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <K> The key type for this node & all its children
  * @param <V> The value type for this node & all its children
  */
-public class Node<K, V> {
+public final class Node<K, V> {
 	private final Map<K, Node<K, V>> children;
 	private V value;
 
@@ -35,6 +35,16 @@ public class Node<K, V> {
 	}
 
 	/**
+	 * Shortcut for {@code #getChild(key).getValue()}.
+	 *
+	 * @param key The key of the child node to get the value for
+	 * @return The value of the child node. Will return {@code null} if child node doesn't exist
+	 */
+	public V getValue(K key) {
+		return getChild(key).getValue();
+	}
+
+	/**
 	 * Gets this node's value, and casts it to the provided value type.
 	 *
 	 * @param valueType The class representing the value type to cast to
@@ -44,6 +54,18 @@ public class Node<K, V> {
 	 */
 	public <T extends V> T getValue(Class<T> valueType) throws ClassCastException {
 		return valueType.cast(getValue());
+	}
+
+	/**
+	 * Shortcut for {@code #getChild(key).getValue(valueType)}.
+	 *
+	 * @param key The key of the child node to get the value for
+	 * @param valueType The class representing the value type to cast to
+	 * @param <T> The value type
+	 * @return The value of the child node. Will return {@code null} if child node doesn't exist
+	 */
+	public <T extends V> T getValue(K key, Class<T> valueType) {
+		return getChild(key).getValue(valueType);
 	}
 
 	/**
@@ -94,6 +116,16 @@ public class Node<K, V> {
 	 */
 	public void addChild(K key, Node<K, V> child) {
 		children.put(key, child);
+	}
+
+	/**
+	 * Shortcut for {@code #addChild(key, new Node<>(value))}.
+	 *
+	 * @param key The key to set the child node to
+	 * @param value The new child node's value
+	 */
+	public void addChild(K key, V value) {
+		addChild(key, new Node<>(value));
 	}
 
 	/**
