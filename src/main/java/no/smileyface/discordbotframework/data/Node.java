@@ -1,5 +1,6 @@
 package no.smileyface.discordbotframework.data;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,12 +56,22 @@ public class Node<K, V> {
 	}
 
 	/**
-	 * Gets an unmodifiable map of all child nodes.
+	 * Gets an unmodifiable collection of all child nodes.
 	 *
-	 * @return An unmodifiable map of all child nodes.
+	 * @return An unmodifiable collection of all child nodes.
 	 */
-	public Map<K, Node<K, V>> getChildren() {
-		return Collections.unmodifiableMap(children);
+	public Collection<Node<K, V>> getChildren() {
+		return Collections.unmodifiableCollection(children.values());
+	}
+
+	/**
+	 * Checks if a child node exists.
+	 *
+	 * @param key The key to check if it has a child node
+	 * @return If the specified key has a child node assigned to it or not
+	 */
+	public boolean hasChild(K key) {
+		return children.containsKey(key);
 	}
 
 	/**
@@ -89,10 +100,21 @@ public class Node<K, V> {
 	 * Gets a child if it's present, otherwise makes a child and returns it.
 	 *
 	 * @param key The child node's key
+	 * @param ifAbsentValue The value to give the newly created node, if one is made
+	 * @return The existing or newly created child node
+	 */
+	public @NotNull Node<K, V> getOrAddChild(K key, V ifAbsentValue) {
+		return children.computeIfAbsent(key, k -> new Node<>(ifAbsentValue));
+	}
+
+	/**
+	 * Shortcut for {@code #getOrAddChild(key, null)}.
+	 *
+	 * @param key The child node's key
 	 * @return The existing or newly created child node
 	 */
 	public @NotNull Node<K, V> getOrAddChild(K key) {
-		return getChildren().computeIfAbsent(key, k -> new Node<>());
+		return getOrAddChild(key, null);
 	}
 
 	public void addChildren(Map<K, Node<K, V>> children) {
