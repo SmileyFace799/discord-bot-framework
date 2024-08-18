@@ -1,7 +1,6 @@
 package no.smileyface.discordbotframework;
 
 import java.util.Collection;
-import java.util.function.Function;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -11,12 +10,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
-import no.smileyface.discordbotframework.entities.ActionButton;
-import no.smileyface.discordbotframework.entities.ActionCommand;
-import no.smileyface.discordbotframework.entities.ActionModal;
-import no.smileyface.discordbotframework.entities.ActionSelection;
 import no.smileyface.discordbotframework.entities.BotAction;
-import no.smileyface.discordbotframework.entities.Identifiable;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +29,7 @@ public class ActionManager extends ListenerAdapter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionManager.class);
 
 	private final Collection<? extends BotAction<? extends BotAction.ArgKey>> actions;
+	private final Identifier identifier;
 	private final String defaultNotFoundMessage;
 
 	/**
@@ -55,68 +50,13 @@ public class ActionManager extends ListenerAdapter {
 	 */
 	public ActionManager(ActionInitializer actionInitializer) {
 		this.actions = actionInitializer.createActions(this);
+		this.identifier = new Identifier(actions);
 		this.defaultNotFoundMessage = "Oops, the bot doesn't know how to respond to "
 				+ "whatever you just did. Please contact the bot owner";
 	}
 
-	private <I extends Identifiable, T extends Identifiable> T findIdentifiable(
-			Function<BotAction<? extends BotAction.ArgKey>, Collection<I>> getFunction,
-			Class<T> targetClass
-	) {
-		return actions.stream()
-				.flatMap(action -> getFunction.apply(action).stream())
-				.filter(identifiable -> identifiable.getClass() == targetClass)
-				.map(targetClass::cast)
-				.findFirst()
-				.orElse(null);
-	}
-
-	/**
-	 * Find a command by its class.
-	 *
-	 * @param commandClass The class of the command to find
-	 * @return The command found, or {@code null} if not found
-	 */
-	public final <C extends ActionCommand<? extends BotAction.ArgKey>> C findCommand(
-			Class<C> commandClass
-	) {
-		return findIdentifiable(BotAction::getCommands, commandClass);
-	}
-
-	/**
-	 * Find a button by its class.
-	 *
-	 * @param buttonClass The class of the button to find
-	 * @return The button found, or {@code null} if not found
-	 */
-	public final <B extends ActionButton<? extends BotAction.ArgKey>> B findButton(
-			Class<B> buttonClass
-	) {
-		return findIdentifiable(BotAction::getButtons, buttonClass);
-	}
-
-	/**
-	 * Find a modal by its class.
-	 *
-	 * @param modalClass The class of the modal to find
-	 * @return The modal found, or {@code null} if not found
-	 */
-	public final <M extends ActionModal<? extends BotAction.ArgKey>> M findModal(
-			Class<M> modalClass
-	) {
-		return findIdentifiable(BotAction::getModals, modalClass);
-	}
-
-	/**
-	 * Find a selection by its class.
-	 *
-	 * @param selectionClass The class of the selection to find
-	 * @return The selection found, or {@code null} if not found
-	 */
-	public final <S extends ActionSelection<? extends BotAction.ArgKey>> S findSelection(
-			Class<S> selectionClass
-	) {
-		return findIdentifiable(BotAction::getSelections, selectionClass);
+	public Identifier getIdentifier() {
+		return identifier;
 	}
 
 	/**

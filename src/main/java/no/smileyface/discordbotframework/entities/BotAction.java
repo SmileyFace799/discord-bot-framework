@@ -13,7 +13,9 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
+import no.smileyface.discordbotframework.ActionInitializer;
 import no.smileyface.discordbotframework.ActionManager;
+import no.smileyface.discordbotframework.Identifier;
 import no.smileyface.discordbotframework.checks.Check;
 import no.smileyface.discordbotframework.checks.CheckFailedException;
 import no.smileyface.discordbotframework.data.Node;
@@ -51,7 +53,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 	 * @param manager The {@link ActionManager} for this bot
 	 * @param checks  Any {@link Check}s to set conditions that need to be met
 	 *                for the action to go through
-	 * @see no.smileyface.discordbotframework.ActionInitializer ActionInitializer
+	 * @see ActionInitializer ActionInitializer
 	 */
 	protected BotAction(
 			ActionManager manager,
@@ -119,6 +121,10 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 		return Set.of();
 	}
 
+	protected final Identifier getIdentifier() {
+		return manager.getIdentifier();
+	}
+
 	public final Collection<ActionCommand<K>> getCommands() {
 		return commands;
 	}
@@ -133,62 +139,6 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 
 	public final Collection<ActionSelection<K>> getSelections() {
 		return selections;
-	}
-
-	/**
-	 * Find any command by its class.
-	 *
-	 * @param commandClass The class of the command to find
-	 * @return The command found, or {@code null} if not found
-	 *
-	 * @see ActionManager#findCommand(Class)
-	 */
-	protected final <C extends ActionCommand<? extends BotAction.ArgKey>> C findCommand(
-			Class<C> commandClass
-	) {
-		return manager == null ? null : manager.findCommand(commandClass);
-	}
-
-	/**
-	 * Find any button by its class.
-	 *
-	 * @param buttonClass The class of the button to find
-	 * @return The button found, or {@code null} if not found
-	 *
-	 * @see ActionManager#findButton(Class)
-	 */
-	protected final <B extends ActionButton<? extends BotAction.ArgKey>> B findButton(
-			Class<B> buttonClass
-	) {
-		return manager == null ? null : manager.findButton(buttonClass);
-	}
-
-	/**
-	 * Find any modal by its class.
-	 *
-	 * @param modalClass The class of the modal to find
-	 * @return The modal found, or {@code null} if not found
-	 *
-	 * @see ActionManager#findModal(Class)
-	 */
-	protected final <M extends ActionModal<? extends BotAction.ArgKey>> M findModal(
-			Class<M> modalClass
-	) {
-		return manager == null ? null : manager.findModal(modalClass);
-	}
-
-	/**
-	 * Find any selection by its class.
-	 *
-	 * @param selectionClass The class of the selection to find
-	 * @return The selection found, or {@code null} if not found
-	 *
-	 * @see ActionManager#findSelection(Class)
-	 */
-	protected final <S extends ActionSelection<? extends BotAction.ArgKey>> S findSelection(
-			Class<S> selectionClass
-	) {
-		return manager == null ? null : manager.findSelection(selectionClass);
 	}
 
 	private ActionCommand<K> belongsTo(SlashCommandInteractionEvent event) {
