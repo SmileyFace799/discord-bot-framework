@@ -1,7 +1,13 @@
 package no.smileyface.discordbotframework;
 
 import java.util.Collection;
+import java.util.Optional;
 import java.util.function.Function;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import no.smileyface.discordbotframework.entities.ActionButton;
 import no.smileyface.discordbotframework.entities.ActionCommand;
 import no.smileyface.discordbotframework.entities.ActionModal;
@@ -19,7 +25,7 @@ public class Identifier {
 		this.actions = actions;
 	}
 
-	private <I extends Identifiable, T extends Identifiable> T findIdentifiable(
+	private <I extends Identifiable, T extends Identifiable> Optional<T> findIdentifiable(
 			Function<BotAction<? extends BotAction.ArgKey>, Collection<I>> getFunction,
 			Class<T> targetClass
 	) {
@@ -27,19 +33,17 @@ public class Identifier {
 				.flatMap(action -> getFunction.apply(action).stream())
 				.filter(identifiable -> identifiable.getClass() == targetClass)
 				.map(targetClass::cast)
-				.findFirst()
-				.orElse(null);
+				.findFirst();
 	}
 
-	private <I extends Identifiable> I findIdentifiable(
+	private <I extends Identifiable> Optional<I> findIdentifiable(
 			Function<BotAction<? extends BotAction.ArgKey>, Collection<I>> getFunction,
 			String id
 	) {
 		return actions.stream()
 				.flatMap(action -> getFunction.apply(action).stream())
 				.filter(identifiable -> identifiable.identify(id))
-				.findFirst()
-				.orElse(null);
+				.findFirst();
 	}
 
 	/**
@@ -48,7 +52,7 @@ public class Identifier {
 	 * @param commandClass The class of the command to find
 	 * @return The command found, or {@code null} if not found
 	 */
-	public final <C extends ActionCommand<? extends BotAction.ArgKey>> C findCommand(
+	public final <C extends ActionCommand<? extends BotAction.ArgKey>> Optional<C> findCommand(
 			Class<C> commandClass
 	) {
 		return findIdentifiable(BotAction::getCommands, commandClass);
@@ -60,7 +64,9 @@ public class Identifier {
 	 * @param commandName The name of the command to find
 	 * @return The command found, or {@code null} if not found
 	 */
-	public final ActionCommand<? extends BotAction.ArgKey> findCommand(String commandName) {
+	public final Optional<? extends ActionCommand<? extends BotAction.ArgKey>> findCommand(
+			String commandName
+	) {
 		return findIdentifiable(BotAction::getCommands, commandName);
 	}
 
@@ -70,7 +76,7 @@ public class Identifier {
 	 * @param buttonClass The class of the button to find
 	 * @return The button found, or {@code null} if not found
 	 */
-	public final <B extends ActionButton<? extends BotAction.ArgKey>> B findButton(
+	public final <B extends ActionButton<? extends BotAction.ArgKey>> Optional<B> findButton(
 			Class<B> buttonClass
 	) {
 		return findIdentifiable(BotAction::getButtons, buttonClass);
@@ -82,7 +88,9 @@ public class Identifier {
 	 * @param buttonId The ID of the button to find
 	 * @return The button found, or {@code null} if not found
 	 */
-	public final ActionButton<? extends BotAction.ArgKey> findButton(String buttonId) {
+	public final Optional<? extends ActionButton<? extends BotAction.ArgKey>> findButton(
+			String buttonId
+	) {
 		return findIdentifiable(BotAction::getButtons, buttonId);
 	}
 
@@ -92,7 +100,7 @@ public class Identifier {
 	 * @param modalClass The class of the modal to find
 	 * @return The modal found, or {@code null} if not found
 	 */
-	public final <M extends ActionModal<? extends BotAction.ArgKey>> M findModal(
+	public final <M extends ActionModal<? extends BotAction.ArgKey>> Optional<M> findModal(
 			Class<M> modalClass
 	) {
 		return findIdentifiable(BotAction::getModals, modalClass);
@@ -104,7 +112,9 @@ public class Identifier {
 	 * @param modalId The ID of the modal to find
 	 * @return The modal found, or {@code null} if not found
 	 */
-	public final ActionModal<? extends BotAction.ArgKey> findModal(String modalId) {
+	public final Optional<? extends ActionModal<? extends BotAction.ArgKey>> findModal(
+			String modalId
+	) {
 		return findIdentifiable(BotAction::getModals, modalId);
 	}
 
@@ -114,7 +124,7 @@ public class Identifier {
 	 * @param selectionClass The class of the selection to find
 	 * @return The selection found, or {@code null} if not found
 	 */
-	public final <S extends ActionSelection<? extends BotAction.ArgKey>> S findSelection(
+	public final <S extends ActionSelection<? extends BotAction.ArgKey>> Optional<S> findSelection(
 			Class<S> selectionClass
 	) {
 		return findIdentifiable(BotAction::getSelections, selectionClass);
@@ -126,7 +136,45 @@ public class Identifier {
 	 * @param selectionId The ID of the selection to find
 	 * @return The selection found, or {@code null} if not found
 	 */
-	public final ActionSelection<? extends BotAction.ArgKey> findSelection(String selectionId) {
+	public final Optional<? extends ActionSelection<? extends BotAction.ArgKey>> findSelection(
+			String selectionId
+	) {
 		return findIdentifiable(BotAction::getSelections, selectionId);
+	}
+
+	private Optional<? extends BotAction<? extends BotAction.ArgKey>> findAction(
+			Function<BotAction<? extends BotAction.ArgKey>,
+					Collection<? extends Identifiable>> getFunction,
+			String id
+	) {
+		return actions
+				.stream()
+				.filter(action -> getFunction
+						.apply(action)
+						.stream()
+						.anyMatch(identifiable -> identifiable.identify(id))
+				).findFirst();
+	}
+
+	/**
+	 * Find an action by a received event.
+	 *
+	 * @param event The incoming event to find a corresponding action for
+	 * @return The action that should run from the event
+	 */
+	public final Optional<? extends BotAction<? extends BotAction.ArgKey>> findAction(
+			IReplyCallback event
+	) {
+		return switch (event) {
+			case SlashCommandInteractionEvent slashEvent ->
+					findAction(BotAction::getCommands, slashEvent.getName());
+			case ButtonInteractionEvent buttonEvent ->
+					findAction(BotAction::getButtons, buttonEvent.getComponentId());
+			case ModalInteractionEvent modalEvent ->
+					findAction(BotAction::getModals, modalEvent.getModalId());
+			case GenericSelectMenuInteractionEvent<?, ?> selectionEvent ->
+					findAction(BotAction::getSelections, selectionEvent.getComponentId());
+			default -> Optional.empty();
+		};
 	}
 }

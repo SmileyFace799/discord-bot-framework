@@ -5,15 +5,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
-import no.smileyface.discordbotframework.ActionInitializer;
 import no.smileyface.discordbotframework.ActionManager;
 import no.smileyface.discordbotframework.Identifier;
 import no.smileyface.discordbotframework.checks.Check;
@@ -24,14 +20,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Represents a basic bot action. Actions can be triggered through slash commands, buttons & modals.
+ * Represents a basic bot action.
+ * To invoke the action, action inputs need to be provided from the following methods:
+ * <ul>
+ *     <li>{@link #createCommands()}: Slash commands that should trigger this action</li>
+ *     <li>{@link #createButtons()}: Buttons that should trigger this action</li>
+ *     <li>{@link #createModals()}: Modals that should trigger this action when submitted</li>
+ *     <li>{@link #createSelections()}: Selections that should trigger this action
+ *     when submitted</li>
+ * </ul>
  *
  * @param <K> Key type used for args given to {@link #execute(IReplyCallback, Node)}.
  */
 public abstract class BotAction<K extends BotAction.ArgKey> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(BotAction.class);
 
-	private final ScheduledExecutorService scheduler;
 	private final ActionManager manager;
 	private final Collection<ActionCommand<K>> commands;
 	private final Collection<ActionButton<K>> buttons;
@@ -41,25 +44,16 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 
 	/**
 	 * Creates the action.
-	 * To invoke the action, action inputs need to be provided from the following methods:
-	 * <ul>
-	 *     <li>{@link #createCommands()}: Slash commands that should trigger this action</li>
-	 *     <li>{@link #createButtons()}: Buttons that should trigger this action</li>
-	 *     <li>{@link #createModals()}: Modals that should trigger this action when submitted</li>
-	 *     <li>{@link #createSelections()}: Selections that should trigger this action
-	 *     when submitted</li>
-	 * </ul>
 	 *
 	 * @param manager The {@link ActionManager} for this bot
 	 * @param checks  Any {@link Check}s to set conditions that need to be met
 	 *                for the action to go through
-	 * @see ActionInitializer ActionInitializer
+	 * @see no.smileyface.discordbotframework.ActionInitializer ActionInitializer
 	 */
 	protected BotAction(
 			ActionManager manager,
 			Check... checks
 	) {
-		this.scheduler = Executors.newSingleThreadScheduledExecutor();
 		this.manager = manager;
 		// Commands should never change after initialization, and should therefore be immutables
 		this.commands = Collections.unmodifiableCollection(createCommands());
@@ -78,7 +72,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 	 *
 	 * @return A collection of commands that should trigger this action. Empty by default
 	 */
-	protected @NotNull Collection<ActionCommand<K>> createCommands() {
+	protected @NotNull Collection<? extends ActionCommand<K>> createCommands() {
 		return Set.of();
 	}
 
@@ -91,7 +85,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 	 *
 	 * @return A collection of buttons that should trigger this action. Empty by default
 	 */
-	protected @NotNull Collection<ActionButton<K>> createButtons() {
+	protected @NotNull Collection<? extends ActionButton<K>> createButtons() {
 		return Set.of();
 	}
 
@@ -104,7 +98,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 	 *
 	 * @return A collection of modals that should trigger this action. Empty by default
 	 */
-	protected @NotNull Collection<ActionModal<K>> createModals() {
+	protected @NotNull Collection<? extends ActionModal<K>> createModals() {
 		return Set.of();
 	}
 
@@ -117,7 +111,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 	 *
 	 * @return A collection of selections that should trigger this action. Empty by default
 	 */
-	protected @NotNull Collection<ActionSelection<K>> createSelections() {
+	protected @NotNull Collection<? extends ActionSelection<K>> createSelections() {
 		return Set.of();
 	}
 
@@ -130,15 +124,15 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 	}
 
 	public final Collection<ActionButton<K>> getButtons() {
-		return buttons;
+		return Collections.unmodifiableCollection(buttons);
 	}
 
 	public final Collection<ActionModal<K>> getModals() {
-		return modals;
+		return Collections.unmodifiableCollection(modals);
 	}
 
 	public final Collection<ActionSelection<K>> getSelections() {
-		return selections;
+		return Collections.unmodifiableCollection(selections);
 	}
 
 	private ActionCommand<K> belongsTo(SlashCommandInteractionEvent event) {
@@ -191,17 +185,6 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 		};
 	}
 
-	final void registerContextButton(ContextButton<K> button) {
-		if (button.getId() == null) {
-			throw new IllegalArgumentException("Context button cannot have \"null\" id");
-		}
-		buttons.add(button);
-		scheduler.schedule(
-				() -> buttons.removeIf(b -> button.getId().equals(b.getId())),
-				15, TimeUnit.MINUTES
-		);
-	}
-
 	/**
 	 * The code to execute when the action is ran. This should always acknowledge the event.
 	 *
@@ -232,7 +215,6 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 	) {
 		try {
 			runChecks(event);
-			ActionButton<K> button = null;
 			Node<K, Object> args = switch (event) {
 				case SlashCommandInteractionEvent slashEvent -> {
 					ActionCommand<K> command = belongsTo(slashEvent);
@@ -241,7 +223,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 							: command.getSlashArgs(slashEvent);
 				}
 				case ButtonInteractionEvent buttonEvent -> {
-					button = belongsTo(buttonEvent);
+					ActionButton<K> button = belongsTo(buttonEvent);
 					yield button == null
 							? new Node<>()
 							: button.createArgs(buttonEvent);
@@ -260,14 +242,7 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 				}
 				default -> new Node<>();
 			};
-			if (button instanceof ContextButton<K> contextButton) {
-				contextButton.clickedThenDelete(
-						(ButtonInteractionEvent) event,
-						args, buttons
-				);
-			} else {
-				execute(event, args);
-			}
+			execute(event, args);
 		} catch (CheckFailedException cfe) {
 			if (event.isAcknowledged()) {
 				event.getHook().sendMessage(cfe.getMessage()).queue();

@@ -1,6 +1,12 @@
 package no.smileyface.discordbotframework;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -11,6 +17,7 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import no.smileyface.discordbotframework.entities.BotAction;
+import no.smileyface.discordbotframework.entities.context.ContextAction;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +35,10 @@ import org.slf4j.LoggerFactory;
 public class ActionManager extends ListenerAdapter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionManager.class);
 
-	private final Collection<? extends BotAction<? extends BotAction.ArgKey>> actions;
+	private final ScheduledExecutorService scheduler;
+	private final Map<ContextAction<? extends BotAction.ArgKey>, ScheduledFuture<?>>
+			contextActionRemovalTasks;
+	private final Collection<BotAction<? extends BotAction.ArgKey>> actions;
 	private final Identifier identifier;
 	private final String defaultNotFoundMessage;
 
@@ -49,7 +59,9 @@ public class ActionManager extends ListenerAdapter {
 	 * @see #ActionManager(Collection)
 	 */
 	public ActionManager(ActionInitializer actionInitializer) {
-		this.actions = actionInitializer.createActions(this);
+		this.scheduler = Executors.newSingleThreadScheduledExecutor();
+		this.contextActionRemovalTasks = new HashMap<>();
+		this.actions = new HashSet<>(actionInitializer.createActions(this));
 		this.identifier = new Identifier(actions);
 		this.defaultNotFoundMessage = "Oops, the bot doesn't know how to respond to "
 				+ "whatever you just did. Please contact the bot owner";
@@ -76,6 +88,27 @@ public class ActionManager extends ListenerAdapter {
 	}
 
 	/**
+	 * Adds a context action.
+	 *
+	 * @param action The context action to add
+	 * @throws IllegalArgumentException If the context action is already added
+	 */
+	public final void addContextAction(ContextAction<? extends BotAction.ArgKey> action) {
+		if (actions.contains(action)) {
+			throw new IllegalArgumentException("This action is already added");
+		}
+		this.actions.add(action);
+		this.contextActionRemovalTasks.put(
+				action,
+				action.scheduleOnExpiry(scheduler, () -> {
+					synchronized (actions) {
+						actions.remove(action);
+					}
+				})
+		);
+	}
+
+	/**
 	 * Handles an incoming ready event. Fired whenever the bot comes online.
 	 * This can be overridden to add custom behavior.
 	 *
@@ -86,18 +119,29 @@ public class ActionManager extends ListenerAdapter {
 		LOGGER.info("{} is ready", event.getJDA().getSelfUser().getName());
 	}
 
-	private void onActionEvent(IReplyCallback event, String notFoundMessage) {
-		actions.stream().filter(action -> action.belongsTo(event)).findFirst().ifPresentOrElse(
-				action -> action.run(event),
-				() -> event
-						.reply(notFoundMessage == null ? defaultNotFoundMessage : notFoundMessage)
-						.setEphemeral(true)
-						.queue()
+	/**
+	 * Runs an action belonging to an event.
+	 *
+	 * @param event The event received
+	 * @param identifiableId The ID of the identifiable that triggered the event
+	 */
+	protected final void onActionEvent(IReplyCallback event, String identifiableId) {
+		identifier.findAction(event).ifPresentOrElse(
+				action -> {
+					action.run(event);
+					if (action instanceof ContextAction<?> contextAction
+							&& contextAction.checkDeactivate()) {
+						contextActionRemovalTasks.remove(action).cancel(false);
+						synchronized (actions) {
+							actions.remove(action);
+						}
+					}
+				},
+				() -> event.reply(identifiableId.startsWith(ContextAction.CONTEXT_PREFIX)
+						? "This action has expired"
+						: defaultNotFoundMessage
+				).setEphemeral(true).queue()
 		);
-	}
-
-	private void onActionEvent(IReplyCallback event) {
-		onActionEvent(event, null);
 	}
 
 	/**
@@ -110,24 +154,21 @@ public class ActionManager extends ListenerAdapter {
 	 */
 	@Override
 	public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-		onActionEvent(event);
+		onActionEvent(event, event.getName());
 	}
 
 	@Override
 	public void onButtonInteraction(@NotNull ButtonInteractionEvent event) {
-		onActionEvent(event, event.getComponentId().startsWith("--")
-				? "This button has expired"
-				: defaultNotFoundMessage
-		);
+		onActionEvent(event, event.getComponentId());
 	}
 
 	@Override
 	public void onModalInteraction(@NotNull ModalInteractionEvent event) {
-		onActionEvent(event);
+		onActionEvent(event, event.getModalId());
 	}
 
 	@Override
 	public void onGenericSelectMenuInteraction(@NotNull GenericSelectMenuInteractionEvent event) {
-		onActionEvent(event);
+		onActionEvent(event, event.getComponentId());
 	}
 }

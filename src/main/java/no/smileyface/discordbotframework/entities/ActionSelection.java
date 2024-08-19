@@ -1,9 +1,10 @@
 package no.smileyface.discordbotframework.entities;
 
-import java.util.function.Function;
+import java.util.function.Consumer;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import no.smileyface.discordbotframework.data.Node;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A selection menu for executing actions by selecting something.
@@ -13,49 +14,52 @@ import no.smileyface.discordbotframework.data.Node;
  */
 public class ActionSelection<K extends BotAction.ArgKey>
 		implements Identifiable {
-	private final SelectMenu.Builder<?, ?> selectionMenuBuilder;
+	private final SelectMenu selectionMenu;
 	private final K nextValueKey;
 
 	/**
 	 * Creates an action selection.
 	 *
-	 * @param selectionMenuBuilder The selection menu to use when displaying the selection
+	 * @param selectionMenu The selection menu to use when displaying the selection
 	 * @param nextValueKey The key to use for the next selected value in the value node provided by
 	 * 				   {@link #getSelectionArgs(GenericSelectMenuInteractionEvent)}
 	 */
-	public ActionSelection(SelectMenu.Builder<?, ?> selectionMenuBuilder, K nextValueKey) {
-		this.selectionMenuBuilder = selectionMenuBuilder;
+	public ActionSelection(SelectMenu selectionMenu, K nextValueKey) {
+		this.selectionMenu = selectionMenu;
 		this.nextValueKey = nextValueKey;
 	}
 
-	protected final K getNextValueKey() {
+	public final K getNextValueKey() {
 		return nextValueKey;
 	}
 
 	/**
-	 * Gets the selection menu, that can be modified before being built.
+	 * Gets a modified version of this selection's {@link SelectMenu}. This does not modify the
+	 * stored selection menu, and instead creates a new instance.
 	 *
-	 * @param buildFunction A function with instructions on how to build the selection menu.
-	 *                      If this is {@code null}, the selection menu will be returned as-is
-	 * @return The stored selection menu, possibly modified if a build function is provided
+	 * @param buildConsumer A consumer with instructions on how to modify the selection menu.
+	 *                      If the builder accepted by this consumer were to be built
+	 *                      without being modified, the resulting selection menu would be
+	 *                      an identical copy of the stored selection menu
+	 * @return A modified copy of the stored selection menu
 	 * @see #getSelectMenu()
 	 */
 	public final SelectMenu getSelectionMenu(
-			Function<SelectMenu.Builder<?, ?>, SelectMenu> buildFunction
+			@NotNull Consumer<SelectMenu.Builder<?, ?>> buildConsumer
 	) {
-		return buildFunction == null
-				? selectionMenuBuilder.build()
-				: buildFunction.apply(selectionMenuBuilder);
+		SelectMenu.Builder<?, ?> builder = selectionMenu.createCopy();
+		buildConsumer.accept(builder);
+		return builder.build();
 	}
 
 	/**
-	 * Shortcut for {@code #getSelectionMenu(null)}.
+	 * Gets this selection's {@link SelectMenu}.
 	 *
-	 * @return The stored selection menu, unmodified
-	 * @see #getSelectionMenu(Function)
+	 * @return The stored selection menu
+	 * @see #getSelectionMenu(Consumer)
 	 */
 	public final SelectMenu getSelectMenu() {
-		return getSelectionMenu(null);
+		return selectionMenu;
 	}
 
 	/**
@@ -63,7 +67,7 @@ public class ActionSelection<K extends BotAction.ArgKey>
 	 * executing the action associated with this selection.
 	 * This creates a linked list of any selected values,
 	 * where the next value can be acquired with the {@code nextValueKey} provided in the
-	 * {@link #ActionSelection(SelectMenu.Builder, BotAction.ArgKey) constructor}.</p>
+	 * {@link #ActionSelection(SelectMenu, BotAction.ArgKey) constructor}.</p>
 	 * <p>{@link #getNodeRootValue()} is used to set the value of the root node, and
 	 * {@link #addSelectionArgs(GenericSelectMenuInteractionEvent, Node)}
 	 * is used to add more arguments to the arg node (These methods can be overridden).
@@ -114,6 +118,6 @@ public class ActionSelection<K extends BotAction.ArgKey>
 
 	@Override
 	public boolean identify(String id) {
-		return selectionMenuBuilder.getId().equalsIgnoreCase(id);
+		return id != null && id.equalsIgnoreCase(selectionMenu.getId());
 	}
 }
