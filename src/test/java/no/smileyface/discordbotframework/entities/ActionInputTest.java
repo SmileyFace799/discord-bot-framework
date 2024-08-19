@@ -40,7 +40,8 @@ class ActionInputTest {
 		);
 		this.selection = new ActionSelection<>(StringSelectMenu
 				.create("selectiontest")
-				.addOption("test option", "test value"),
+				.addOption("test option", "test value")
+				.build(),
 				TestKey.SELECTION_VALUES
 		);
 		this.action = new BotAction<>(null) {
