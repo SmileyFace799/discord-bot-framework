@@ -115,6 +115,10 @@ public abstract class BotAction<K extends BotAction.ArgKey> {
 		return Set.of();
 	}
 
+	protected final ActionManager getManager() {
+		return manager;
+	}
+
 	protected final Identifier getIdentifier() {
 		return manager.getIdentifier();
 	}
