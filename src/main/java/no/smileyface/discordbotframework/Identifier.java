@@ -3,6 +3,7 @@ package no.smileyface.discordbotframework;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -25,15 +26,42 @@ public class Identifier {
 		this.actions = actions;
 	}
 
-	private <I extends Identifiable, T extends Identifiable> Optional<T> findIdentifiable(
-			Function<BotAction<? extends BotAction.ArgKey>, Collection<I>> getFunction,
+	private static <I extends Identifiable, T extends Identifiable> Optional<T> identify(
+			Stream<I> identifiables,
 			Class<T> targetClass
 	) {
-		return actions.stream()
-				.flatMap(action -> getFunction.apply(action).stream())
+		return identifiables
 				.filter(identifiable -> identifiable.getClass() == targetClass)
 				.map(targetClass::cast)
 				.findFirst();
+	}
+
+	/**
+	 * Finds an identifiable in a collection of identifiables.
+	 *
+	 * @param identifiables The collection of identifiables to search through
+	 * @param targetClass The target class of the identifiable to find
+	 * @param <I> The type of the identifiable to find
+	 * @param <T> The type of identifiables in the collection provided
+	 * @return An optional containing the target identifiable if found
+	 */
+	public static <I extends Identifiable, T extends I> Optional<T> identify(
+			Collection<I> identifiables,
+			Class<T> targetClass
+	) {
+		return identify(identifiables.stream(), targetClass);
+	}
+
+	private <I extends Identifiable, T extends I> Optional<T> findIdentifiable(
+			Function<BotAction<? extends BotAction.ArgKey>, Collection<? extends I>> getFunction,
+			Class<T> targetClass
+	) {
+		return identify(
+				actions
+						.stream()
+						.flatMap(action -> getFunction.apply(action).stream()),
+				targetClass
+		);
 	}
 
 	private <I extends Identifiable> Optional<I> findIdentifiable(
