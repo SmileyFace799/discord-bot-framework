@@ -19,42 +19,45 @@ import static org.junit.jupiter.api.Assertions.*;
 class ContextActionTest {
 	private static final ContextAction.Duration DURATION = new ContextAction.Duration(5, TimeUnit.HOURS);
 
+	class TestContextAction extends ContextAction<BotAction.ArgKey> {
+		TestContextAction() {
+			super(manager, DURATION, true);
+		}
+
+		@NotNull
+		@Override
+		protected Collection<? extends ContextButton<ArgKey>> createButtons() {
+			return Set.of(contextButton);
+		}
+
+		@Override
+		protected void execute(IReplyCallback event, Node<ArgKey, Object> args) {
+			// Do nothing, testing :)
+		}
+	}
+
 	private ActionManager manager;
 	private Identifier identifier;
 	private ContextButton<BotAction.ArgKey> contextButton;
-	private ContextAction<BotAction.ArgKey> contextAction;
 
 	@BeforeEach
 	void setUp() {
 		this.manager = new ActionManager(m -> Set.of());
 		this.identifier = manager.getIdentifier();
 		this.contextButton = new ContextButton<>(ButtonStyle.PRIMARY, "Test Button");
-
-		contextAction = new ContextAction<>(manager, DURATION, true) {
-			@Override
-			protected void execute(IReplyCallback event, Node<ArgKey, Object> args) {
-				// Do nothing, testing :)
-			}
-
-			@NotNull
-			@Override
-			protected Collection<? extends ContextButton<ArgKey>> createButtons() {
-				return Set.of(contextButton);
-			}
-		};
 	}
 
 	@Test
 	void testAddingContextAction() {
 		assertTrue(identifier.findButton(contextButton.getId()).isEmpty());
-		manager.addContextAction(contextAction);
+		TestContextAction test = new TestContextAction();
 		assertEquals(contextButton, identifier.findButton(contextButton.getId()).orElseThrow());
-		assertEquals(contextAction, identifier.findAction(MockEventFactory.makeButtonEvent(contextButton.getId())).orElseThrow());
+		assertEquals(test, identifier.findAction(MockEventFactory.makeButtonEvent(contextButton.getId())).orElseThrow());
 	}
 
 	@Test
 	void testActionRemovedAfterUse() {
-		manager.addContextAction(contextAction);
+		new TestContextAction();
 		manager.onButtonInteraction(MockEventFactory.makeButtonEvent(contextButton.getId()));
 		assertTrue(identifier.findButton(contextButton.getId()).isEmpty());
 		assertTrue(identifier.findAction(MockEventFactory.makeButtonEvent(contextButton.getId())).isEmpty());

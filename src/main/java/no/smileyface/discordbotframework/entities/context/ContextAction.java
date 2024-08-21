@@ -61,6 +61,7 @@ public abstract class ContextAction<K extends BotAction.ArgKey> extends BotActio
 		this.duration = expiresAfter;
 		this.deactivatePredicate = deactivateAfterUse;
 		this.runCounter = 0;
+		getManager().addContextAction(this);
 	}
 
 	/**
