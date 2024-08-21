@@ -8,6 +8,8 @@ import no.smileyface.discordbotframework.data.Node;
 
 /**
  * A button for executing actions.
+ *
+ * @param <K> Key type used for args returned from {@link #createArgs(ButtonInteractionEvent)}
  */
 public class ActionButton<K extends BotAction.ArgKey> extends ButtonImpl implements Identifiable {
 	public ActionButton(ButtonStyle style, String id, String text) {
