@@ -81,7 +81,7 @@ public class DiscordBot {
 	 * @see #DiscordBot(Collection, GatewayIntent...)
 	 */
 	public DiscordBot(
-			Collection<? extends BotAction<? extends BotAction.ArgKey>> actions,
+			Collection<? extends BotAction<?>> actions,
 			Node<String, String> properties,
 			GatewayIntent... intents
 	) throws InterruptedException {
@@ -101,7 +101,7 @@ public class DiscordBot {
 	 * @see #DiscordBot(Collection, Node, GatewayIntent...)
 	 */
 	public DiscordBot(
-			Collection<? extends BotAction<? extends BotAction.ArgKey>> actions,
+			Collection<? extends BotAction<?>> actions,
 			GatewayIntent... intents
 	) throws InterruptedException, PropertyLoadException {
 		this(actions, PropertyLoader.loadProperties(), intents);

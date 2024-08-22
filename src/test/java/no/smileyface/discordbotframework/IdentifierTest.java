@@ -1,6 +1,5 @@
 package no.smileyface.discordbotframework;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
@@ -10,13 +9,13 @@ import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import no.smileyface.discordbotframework.data.Node;
-import no.smileyface.discordbotframework.entities.ActionButton;
-import no.smileyface.discordbotframework.entities.ActionCommand;
-import no.smileyface.discordbotframework.entities.ActionModal;
-import no.smileyface.discordbotframework.entities.ActionSelection;
-import no.smileyface.discordbotframework.entities.BotAction;
+import no.smileyface.discordbotframework.entities.noncontext.ActionButton;
+import no.smileyface.discordbotframework.entities.noncontext.ActionCommand;
+import no.smileyface.discordbotframework.entities.noncontext.ActionModal;
+import no.smileyface.discordbotframework.entities.noncontext.ActionSelection;
+import no.smileyface.discordbotframework.entities.GenericBotAction;
 import no.smileyface.discordbotframework.entities.MockEventFactory;
-import org.jetbrains.annotations.NotNull;
+import no.smileyface.discordbotframework.entities.BotAction;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -90,31 +89,7 @@ class IdentifierTest {
 		this.button = new TestButton();
 		this.modal = new TestModal();
 		this.selection = new TestSelection();
-		this.action = new BotAction<>(null) {
-			@NotNull
-			@Override
-			protected Collection<ActionCommand<TestKey>> createCommands() {
-				return Set.of(command);
-			}
-
-			@NotNull
-			@Override
-			protected Collection<ActionButton<TestKey>> createButtons() {
-				return Set.of(button);
-			}
-
-			@NotNull
-			@Override
-			protected Collection<ActionModal<TestKey>> createModals() {
-				return Set.of(modal);
-			}
-
-			@NotNull
-			@Override
-			protected Collection<ActionSelection<TestKey>> createSelections() {
-				return Set.of(selection);
-			}
-
+		this.action = new BotAction<>(null, command) {
 			@Override
 			protected void execute(
 					IReplyCallback event,
@@ -123,6 +98,9 @@ class IdentifierTest {
 				// Do nothing, just testing :)
 			}
 		};
+		action.addButtons(button);
+		action.addModals(modal);
+		action.addSelections(selection);
 		this.identifier = new Identifier(Set.of(action));
 	}
 
@@ -250,7 +228,7 @@ class IdentifierTest {
 		withEvent(MockEventFactory.makeModalEvent(SELECTION_NAME), false);
 	}
 
-	private enum TestKey implements BotAction.ArgKey {
+	private enum TestKey implements GenericBotAction.ArgKey {
 		SELECTION_VALUES
 	}
 }

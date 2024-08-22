@@ -1,23 +1,27 @@
-package no.smileyface.discordbotframework.entities;
+package no.smileyface.discordbotframework.entities.generic;
 
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonStyle;
 import net.dv8tion.jda.internal.interactions.component.ButtonImpl;
 import no.smileyface.discordbotframework.data.Node;
+import no.smileyface.discordbotframework.entities.GenericBotAction;
+import no.smileyface.discordbotframework.entities.Identifiable;
 
 /**
  * A button for executing actions.
  *
  * @param <K> Key type used for args returned from {@link #createArgs(ButtonInteractionEvent)}
  */
-public class ActionButton<K extends BotAction.ArgKey> extends ButtonImpl implements Identifiable {
-	public ActionButton(ButtonStyle style, String id, String text) {
-		this(style, id, text, null);
+public abstract class GenericButton<K extends GenericBotAction.ArgKey>
+		extends ButtonImpl
+		implements Identifiable {
+	protected GenericButton(ButtonStyle style, String id, String label, Emoji emoji) {
+		super(id, label, style, false, emoji);
 	}
 
-	public ActionButton(ButtonStyle style, String id, String text, Emoji emoji) {
-		super(id, text, style, false, emoji);
+	protected GenericButton(ButtonStyle style, String id, String label) {
+		this(style, id, label, null);
 	}
 
 	/**

@@ -3,14 +3,17 @@ package no.smileyface.discordbotframework.entities.context;
 import java.util.function.Function;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
-import no.smileyface.discordbotframework.entities.ActionSelection;
-import no.smileyface.discordbotframework.entities.BotAction;
+import no.smileyface.discordbotframework.entities.ContextAction;
+import no.smileyface.discordbotframework.entities.GenericBotAction;
+import no.smileyface.discordbotframework.entities.generic.GenericSelection;
 
 /**
- * A selection menu for executing actions by selecting something.
+ * A selection menu for executing context actions by selecting something.
  * {@inheritDoc}
+ *
+ * @see no.smileyface.discordbotframework.entities.noncontext.ActionSelection ActionSelection
  */
-public class ContextSelection<K extends BotAction.ArgKey> extends ActionSelection<K> {
+public class ContextSelection<K extends GenericBotAction.ArgKey> extends GenericSelection<K> {
 	private static final String TYPE_STRING = "sct";
 
 	private static long idCounter = 0;

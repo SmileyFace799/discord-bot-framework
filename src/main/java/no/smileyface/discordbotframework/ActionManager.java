@@ -17,7 +17,8 @@ import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import no.smileyface.discordbotframework.entities.BotAction;
-import no.smileyface.discordbotframework.entities.context.ContextAction;
+import no.smileyface.discordbotframework.entities.ContextAction;
+import no.smileyface.discordbotframework.entities.GenericBotAction;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +37,9 @@ public class ActionManager extends ListenerAdapter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ActionManager.class);
 
 	private final ScheduledExecutorService scheduler;
-	private final Map<ContextAction<? extends BotAction.ArgKey>, ScheduledFuture<?>>
+	private final Map<ContextAction<? extends GenericBotAction.ArgKey>, ScheduledFuture<?>>
 			contextActionRemovalTasks;
-	private final Collection<BotAction<? extends BotAction.ArgKey>> actions;
+	private final Collection<GenericBotAction<?, ?, ?, ?, ?>> actions;
 	private final Identifier identifier;
 	private final String defaultNotFoundMessage;
 
@@ -48,14 +49,14 @@ public class ActionManager extends ListenerAdapter {
 	 * @param actions The collection of actions that the bot can perform.
 	 * @see #ActionManager(ActionInitializer)
 	 */
-	public ActionManager(Collection<? extends BotAction<? extends BotAction.ArgKey>> actions) {
+	public ActionManager(Collection<? extends BotAction<?>> actions) {
 		this(manager -> actions);
 	}
 
 	/**
 	 * Constructor.
 	 *
-	 * @param actionInitializer Initializer for all bot actions
+	 * @param actionInitializer Initializer for all regular bot actions
 	 * @see #ActionManager(Collection)
 	 */
 	public ActionManager(ActionInitializer actionInitializer) {
@@ -73,7 +74,8 @@ public class ActionManager extends ListenerAdapter {
 
 	/**
 	 * Runs {@link CommandListUpdateAction#addCommands(CommandData...)}
-	 * on every command associated with a {@link BotAction}. This will not queue the update action
+	 * on every command associated with a {@link GenericBotAction}.
+	 * This will not queue the update action.
 	 *
 	 * @param updateAction The command update action
 	 * @return The same update action that was passed, but with all commands added
@@ -93,7 +95,7 @@ public class ActionManager extends ListenerAdapter {
 	 * @param action The context action to add
 	 * @throws IllegalArgumentException If the context action is already added
 	 */
-	public final void addContextAction(ContextAction<? extends BotAction.ArgKey> action) {
+	public final void addContextAction(ContextAction<?> action) {
 		if (actions.contains(action)) {
 			throw new IllegalArgumentException("This action is already added");
 		}

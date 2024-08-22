@@ -19,7 +19,7 @@ public interface ActionInitializer {
 	 * @return A list of every action the bot has
 	 */
 	@NotNull
-	Collection<? extends BotAction<? extends BotAction.ArgKey>> createActions(
+	Collection<? extends BotAction<?>> createActions(
 			ActionManager manager
 	);
 }

@@ -1,34 +1,34 @@
-package no.smileyface.discordbotframework.entities.context;
+package no.smileyface.discordbotframework.entities;
 
-import java.util.Collection;
-import java.util.Set;
+import java.time.Duration;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
+import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
 import no.smileyface.discordbotframework.ActionManager;
 import no.smileyface.discordbotframework.checks.Check;
-import no.smileyface.discordbotframework.entities.ActionCommand;
-import no.smileyface.discordbotframework.entities.BotAction;
+import no.smileyface.discordbotframework.data.Node;
+import no.smileyface.discordbotframework.entities.context.ContextButton;
+import no.smileyface.discordbotframework.entities.context.ContextModal;
+import no.smileyface.discordbotframework.entities.context.ContextSelection;
+import no.smileyface.discordbotframework.entities.generic.GenericCommand;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A temporary action that can be created after the bot has started.
- * Cannot be invoked by commands, as commands are registered on startup.
- * To invoke the action, action inputs need to be provided from the following methods:
+ * <p>Represents a temporary action.</p>
+ * <p>To invoke the action, forms of user input can be added to this action:</p>
  * <ul>
- *     <li>{@link #createButtons()}: Buttons that should trigger this context action</li>
- *     <li>{@link #createModals()}: Modals that should trigger this context action
- *     when submitted</li>
- *     <li>{@link #createSelections()}: Selections that should trigger this context action
- *     when submitted</li>
+ *     <li>Buttons: Added by calling {@link #addButtons(ContextButton...)}</li>
+ *     <li>Modals: Added by calling {@link #addModals(ContextModal...)}</li>
+ *     <li>Selections: Added by calling {@link #addSelections(ContextSelection...)}</li>
  * </ul>
  *
- * @param <K> Key type used for args given to {@link #execute(
- * net.dv8tion.jda.api.interactions.callbacks.IReplyCallback,
- * no.smileyface.discordbotframework.data.Node) #execute(IReplyCallback, Node)}
+ * @param <K> Key type used for args given to {@link #execute(IReplyCallback, Node)}.
  */
-public abstract class ContextAction<K extends BotAction.ArgKey> extends BotAction<K> {
+public abstract non-sealed class ContextAction<K extends GenericBotAction.ArgKey>
+		extends GenericBotAction<K, GenericCommand<K>, ContextButton<K>,
+		ContextModal<K>, ContextSelection<K>> {
 	public static final String CONTEXT_PREFIX = "--ctx";
 
 	private final Duration duration;
@@ -112,47 +112,10 @@ public abstract class ContextAction<K extends BotAction.ArgKey> extends BotActio
 			ScheduledExecutorService scheduler,
 			Runnable onExpiry
 	) {
-		return scheduler.schedule(onExpiry, duration.time(), duration.unit());
+		return scheduler.schedule(onExpiry, duration.getSeconds(), TimeUnit.SECONDS);
 	}
 
 	public final boolean checkDeactivate() {
 		return deactivatePredicate.test(this, ++runCounter);
 	}
-
-	/**
-	 * As commands have to be initialized on startup, context actions cannot have them.
-	 *
-	 * @return An empty collection of commands
-	 */
-	@NotNull
-	@Override
-	protected final Collection<? extends ActionCommand<K>> createCommands() {
-		return super.createCommands();
-	}
-
-	@NotNull
-	@Override
-	protected Collection<? extends ContextButton<K>> createButtons() {
-		return Set.of();
-	}
-
-	@NotNull
-	@Override
-	protected Collection<? extends ContextModal<K>> createModals() {
-		return Set.of();
-	}
-
-	@NotNull
-	@Override
-	protected Collection<? extends ContextSelection<K>> createSelections() {
-		return Set.of();
-	}
-
-	/**
-	 * Represents a duration for how long the context action will last.
-	 *
-	 * @param time The amount of time it lasts
-	 * @param unit The unit of time that {@code amount} is specified in
-	 */
-	public record Duration(long time, TimeUnit unit) {}
 }

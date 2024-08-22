@@ -9,20 +9,20 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
-import no.smileyface.discordbotframework.entities.ActionButton;
-import no.smileyface.discordbotframework.entities.ActionCommand;
-import no.smileyface.discordbotframework.entities.ActionModal;
-import no.smileyface.discordbotframework.entities.ActionSelection;
-import no.smileyface.discordbotframework.entities.BotAction;
+import no.smileyface.discordbotframework.entities.GenericBotAction;
 import no.smileyface.discordbotframework.entities.Identifiable;
+import no.smileyface.discordbotframework.entities.generic.GenericButton;
+import no.smileyface.discordbotframework.entities.generic.GenericCommand;
+import no.smileyface.discordbotframework.entities.generic.GenericModal;
+import no.smileyface.discordbotframework.entities.generic.GenericSelection;
 
 /**
  * Finds identifiable entities, either by class name (preferred) or name/id.
  */
 public class Identifier {
-	private final Collection<? extends BotAction<? extends BotAction.ArgKey>> actions;
+	private final Collection<? extends GenericBotAction<?, ?, ?, ?, ?>> actions;
 
-	Identifier(Collection<? extends BotAction<? extends BotAction.ArgKey>> actions) {
+	Identifier(Collection<? extends GenericBotAction<?, ?, ?, ?, ?>> actions) {
 		this.actions = actions;
 	}
 
@@ -40,9 +40,9 @@ public class Identifier {
 	 * Finds an identifiable in a collection of identifiables.
 	 *
 	 * @param identifiables The collection of identifiables to search through
-	 * @param targetClass The target class of the identifiable to find
-	 * @param <I> The type of the identifiable to find
-	 * @param <T> The type of identifiables in the collection provided
+	 * @param targetClass   The target class of the identifiable to find
+	 * @param <I>           The type of identifiables in the collection provided
+	 * @param <T>           The type of the identifiable to find
 	 * @return An optional containing the target identifiable if found
 	 */
 	public static <I extends Identifiable, T extends I> Optional<T> identify(
@@ -52,26 +52,48 @@ public class Identifier {
 		return identify(identifiables.stream(), targetClass);
 	}
 
+	private static <I extends Identifiable> Optional<I> identify(
+			Stream<I> identifiables,
+			String id
+	) {
+		return identifiables
+				.filter(identifiable -> identifiable.identify(id))
+				.findFirst();
+	}
+
+	/**
+	 * Finds an identifiable in a collection of identifiables.
+	 *
+	 * @param identifiables The collection of identifiables to search through
+	 * @param id            The id of the identifiable to find
+	 * @param <I>           The type of identifiables in the collection provided
+	 * @return An optional containing the target identifiable if found
+	 */
+	public static <I extends Identifiable> Optional<I> identify(
+			Collection<I> identifiables,
+			String id
+	) {
+		return identify(identifiables.stream(), id);
+	}
+
 	private <I extends Identifiable, T extends I> Optional<T> findIdentifiable(
-			Function<BotAction<? extends BotAction.ArgKey>, Collection<? extends I>> getFunction,
+			Function<GenericBotAction<?, ?, ?, ?, ?>, Collection<? extends I>> getFunction,
 			Class<T> targetClass
 	) {
 		return identify(
-				actions
-						.stream()
-						.flatMap(action -> getFunction.apply(action).stream()),
+				actions.stream().flatMap(action -> getFunction.apply(action).stream()),
 				targetClass
 		);
 	}
 
 	private <I extends Identifiable> Optional<I> findIdentifiable(
-			Function<BotAction<? extends BotAction.ArgKey>, Collection<I>> getFunction,
+			Function<GenericBotAction<?, ?, ?, ?, ?>, Collection<I>> getFunction,
 			String id
 	) {
-		return actions.stream()
-				.flatMap(action -> getFunction.apply(action).stream())
-				.filter(identifiable -> identifiable.identify(id))
-				.findFirst();
+		return identify(
+				actions.stream().flatMap(action -> getFunction.apply(action).stream()),
+				id
+		);
 	}
 
 	/**
@@ -80,10 +102,8 @@ public class Identifier {
 	 * @param commandClass The class of the command to find
 	 * @return The command found, or {@code null} if not found
 	 */
-	public final <C extends ActionCommand<? extends BotAction.ArgKey>> Optional<C> findCommand(
-			Class<C> commandClass
-	) {
-		return findIdentifiable(BotAction::getCommands, commandClass);
+	public final <C extends GenericCommand<?>> Optional<C> findCommand(Class<C> commandClass) {
+		return findIdentifiable(GenericBotAction::getCommands, commandClass);
 	}
 
 	/**
@@ -92,10 +112,8 @@ public class Identifier {
 	 * @param commandName The name of the command to find
 	 * @return The command found, or {@code null} if not found
 	 */
-	public final Optional<? extends ActionCommand<? extends BotAction.ArgKey>> findCommand(
-			String commandName
-	) {
-		return findIdentifiable(BotAction::getCommands, commandName);
+	public final Optional<? extends GenericCommand<?>> findCommand(String commandName) {
+		return findIdentifiable(GenericBotAction::getCommands, commandName);
 	}
 
 	/**
@@ -104,10 +122,8 @@ public class Identifier {
 	 * @param buttonClass The class of the button to find
 	 * @return The button found, or {@code null} if not found
 	 */
-	public final <B extends ActionButton<? extends BotAction.ArgKey>> Optional<B> findButton(
-			Class<B> buttonClass
-	) {
-		return findIdentifiable(BotAction::getButtons, buttonClass);
+	public final <B extends GenericButton<?>> Optional<B> findButton(Class<B> buttonClass) {
+		return findIdentifiable(GenericBotAction::getButtons, buttonClass);
 	}
 
 	/**
@@ -116,10 +132,8 @@ public class Identifier {
 	 * @param buttonId The ID of the button to find
 	 * @return The button found, or {@code null} if not found
 	 */
-	public final Optional<? extends ActionButton<? extends BotAction.ArgKey>> findButton(
-			String buttonId
-	) {
-		return findIdentifiable(BotAction::getButtons, buttonId);
+	public final Optional<? extends GenericButton<?>> findButton(String buttonId) {
+		return findIdentifiable(GenericBotAction::getButtons, buttonId);
 	}
 
 	/**
@@ -128,10 +142,8 @@ public class Identifier {
 	 * @param modalClass The class of the modal to find
 	 * @return The modal found, or {@code null} if not found
 	 */
-	public final <M extends ActionModal<? extends BotAction.ArgKey>> Optional<M> findModal(
-			Class<M> modalClass
-	) {
-		return findIdentifiable(BotAction::getModals, modalClass);
+	public final <M extends GenericModal<?>> Optional<M> findModal(Class<M> modalClass) {
+		return findIdentifiable(GenericBotAction::getModals, modalClass);
 	}
 
 	/**
@@ -140,10 +152,8 @@ public class Identifier {
 	 * @param modalId The ID of the modal to find
 	 * @return The modal found, or {@code null} if not found
 	 */
-	public final Optional<? extends ActionModal<? extends BotAction.ArgKey>> findModal(
-			String modalId
-	) {
-		return findIdentifiable(BotAction::getModals, modalId);
+	public final Optional<? extends GenericModal<?>> findModal(String modalId) {
+		return findIdentifiable(GenericBotAction::getModals, modalId);
 	}
 
 	/**
@@ -152,10 +162,10 @@ public class Identifier {
 	 * @param selectionClass The class of the selection to find
 	 * @return The selection found, or {@code null} if not found
 	 */
-	public final <S extends ActionSelection<? extends BotAction.ArgKey>> Optional<S> findSelection(
+	public final <S extends GenericSelection<?>> Optional<S> findSelection(
 			Class<S> selectionClass
 	) {
-		return findIdentifiable(BotAction::getSelections, selectionClass);
+		return findIdentifiable(GenericBotAction::getSelections, selectionClass);
 	}
 
 	/**
@@ -164,14 +174,12 @@ public class Identifier {
 	 * @param selectionId The ID of the selection to find
 	 * @return The selection found, or {@code null} if not found
 	 */
-	public final Optional<? extends ActionSelection<? extends BotAction.ArgKey>> findSelection(
-			String selectionId
-	) {
-		return findIdentifiable(BotAction::getSelections, selectionId);
+	public final Optional<? extends GenericSelection<?>> findSelection(String selectionId) {
+		return findIdentifiable(GenericBotAction::getSelections, selectionId);
 	}
 
-	private Optional<? extends BotAction<? extends BotAction.ArgKey>> findAction(
-			Function<BotAction<? extends BotAction.ArgKey>,
+	private Optional<? extends GenericBotAction<?, ?, ?, ?, ?>> findAction(
+			Function<GenericBotAction<?, ?, ?, ?, ?>,
 					Collection<? extends Identifiable>> getFunction,
 			String id
 	) {
@@ -190,18 +198,18 @@ public class Identifier {
 	 * @param event The incoming event to find a corresponding action for
 	 * @return The action that should run from the event
 	 */
-	public final Optional<? extends BotAction<? extends BotAction.ArgKey>> findAction(
+	public final Optional<? extends GenericBotAction<?, ?, ?, ?, ?>> findAction(
 			IReplyCallback event
 	) {
 		return switch (event) {
 			case SlashCommandInteractionEvent slashEvent ->
-					findAction(BotAction::getCommands, slashEvent.getName());
+					findAction(GenericBotAction::getCommands, slashEvent.getName());
 			case ButtonInteractionEvent buttonEvent ->
-					findAction(BotAction::getButtons, buttonEvent.getComponentId());
+					findAction(GenericBotAction::getButtons, buttonEvent.getComponentId());
 			case ModalInteractionEvent modalEvent ->
-					findAction(BotAction::getModals, modalEvent.getModalId());
+					findAction(GenericBotAction::getModals, modalEvent.getModalId());
 			case GenericSelectMenuInteractionEvent<?, ?> selectionEvent ->
-					findAction(BotAction::getSelections, selectionEvent.getComponentId());
+					findAction(GenericBotAction::getSelections, selectionEvent.getComponentId());
 			default -> Optional.empty();
 		};
 	}
