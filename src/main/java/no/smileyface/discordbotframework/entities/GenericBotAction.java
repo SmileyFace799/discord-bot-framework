@@ -153,8 +153,8 @@ public abstract sealed class GenericBotAction<
 	/**
 	 * The code to execute when the action is ran. This should always acknowledge the event.
 	 *
-	 * @param event  A reply-able event representing the context that triggered the action
-	 * @param args   Any arguments given when upon invocation of this action
+	 * @param event A reply-able event representing the context that triggered the action
+	 * @param args  Any arguments given when upon invocation of this action
 	 */
 	protected abstract void execute(IReplyCallback event, Node<K, Object> args);
 
@@ -173,11 +173,9 @@ public abstract sealed class GenericBotAction<
 	 * {@link CheckFailedException}.
 	 * </p>
 	 *
-	 * @param event  The {@link IReplyCallback} containing the command's invocation context
+	 * @param event The {@link IReplyCallback} containing the command's invocation context
 	 */
-	public final void run(
-			IReplyCallback event
-	) {
+	public final void run(IReplyCallback event) {
 		try {
 			runChecks(event);
 			Node<K, Object> args = switch (event) {
