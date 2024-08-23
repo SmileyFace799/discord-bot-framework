@@ -74,10 +74,9 @@ class IdentifierTest {
 	static class TestSelection extends ActionSelection<TestKey> {
 		TestSelection() {
 			super(
-					StringSelectMenu
+					() -> StringSelectMenu
 							.create(SELECTION_NAME)
-							.addOption("test option", "test value")
-							.build(),
+							.addOption("test option", "test value"),
 					TestKey.SELECTION_VALUES
 			);
 		}

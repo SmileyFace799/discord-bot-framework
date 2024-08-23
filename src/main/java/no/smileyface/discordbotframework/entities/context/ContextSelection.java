@@ -1,6 +1,7 @@
 package no.smileyface.discordbotframework.entities.context;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import no.smileyface.discordbotframework.entities.ContextAction;
@@ -36,9 +37,11 @@ public class ContextSelection<K extends GenericBotAction.ArgKey> extends Generic
 		super(makeSelection(builderFunction), nextValueKey);
 	}
 
-	private static SelectMenu makeSelection(Function<String, SelectMenu.Builder<?, ?>> builder) {
+	private static Supplier<SelectMenu.Builder<?, ?>> makeSelection(
+			Function<String, SelectMenu.Builder<?, ?>> builder
+	) {
 		String id = nextId();
-		return builder.apply(id).setId(id).build();
+		return () -> builder.apply(id);
 	}
 
 	private static synchronized String nextId() {
