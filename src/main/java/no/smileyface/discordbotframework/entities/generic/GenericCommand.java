@@ -1,4 +1,4 @@
-package no.smileyface.discordbotframework.entities;
+package no.smileyface.discordbotframework.entities.generic;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import no.smileyface.discordbotframework.data.Node;
+import no.smileyface.discordbotframework.entities.GenericBotAction;
+import no.smileyface.discordbotframework.entities.Identifiable;
 
 /**
  * A slash command for executing actions.
@@ -16,7 +18,7 @@ import no.smileyface.discordbotframework.data.Node;
  * @param <K> Key type used for args returned from
  * 			  {@link #getSlashArgs(SlashCommandInteractionEvent)}.
  */
-public class ActionCommand<K extends BotAction.ArgKey> implements Identifiable {
+public abstract class GenericCommand<K extends GenericBotAction.ArgKey> implements Identifiable {
 	private final SlashCommandData data;
 	private final Collection<String> nicknames;
 
@@ -26,7 +28,7 @@ public class ActionCommand<K extends BotAction.ArgKey> implements Identifiable {
 	 * @param data Command data for registering the slash command
 	 * @param nicknames Any nicknames for the command
 	 */
-	public ActionCommand(SlashCommandData data, String... nicknames) {
+	protected GenericCommand(SlashCommandData data, String... nicknames) {
 		this.data = data;
 		this.nicknames = nicknames == null
 				? Set.of()

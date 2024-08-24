@@ -1,9 +1,12 @@
-package no.smileyface.discordbotframework.entities;
+package no.smileyface.discordbotframework.entities.generic;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import net.dv8tion.jda.api.events.interaction.component.GenericSelectMenuInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
 import no.smileyface.discordbotframework.data.Node;
+import no.smileyface.discordbotframework.entities.GenericBotAction;
+import no.smileyface.discordbotframework.entities.Identifiable;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,20 +15,21 @@ import org.jetbrains.annotations.NotNull;
  * @param <K> Key type used for args returned from
  * 			  {@link #getSelectionArgs(GenericSelectMenuInteractionEvent)}
  */
-public class ActionSelection<K extends BotAction.ArgKey>
-		implements Identifiable {
-	private final SelectMenu selectionMenu;
+public abstract class GenericSelection<K extends GenericBotAction.ArgKey> implements Identifiable {
+	private final Supplier<SelectMenu.Builder<?, ?>> builderSupplier;
+	private final String id;
 	private final K nextValueKey;
 
 	/**
 	 * Creates an action selection.
 	 *
-	 * @param selectionMenu The selection menu to use when displaying the selection
-	 * @param nextValueKey The key to use for the next selected value in the value node provided by
-	 * 				   {@link #getSelectionArgs(GenericSelectMenuInteractionEvent)}
+	 * @param builderSupplier A supplier for the "base" selection menu to use
+	 * @param nextValueKey    The key to use for the next selected value in the value node provided
+	 *                        by {@link #getSelectionArgs(GenericSelectMenuInteractionEvent)}
 	 */
-	public ActionSelection(SelectMenu selectionMenu, K nextValueKey) {
-		this.selectionMenu = selectionMenu;
+	protected GenericSelection(Supplier<SelectMenu.Builder<?, ?>> builderSupplier, K nextValueKey) {
+		this.builderSupplier = builderSupplier;
+		this.id = builderSupplier.get().getId();
 		this.nextValueKey = nextValueKey;
 	}
 
@@ -47,7 +51,7 @@ public class ActionSelection<K extends BotAction.ArgKey>
 	public final SelectMenu getSelectionMenu(
 			@NotNull Consumer<SelectMenu.Builder<?, ?>> buildConsumer
 	) {
-		SelectMenu.Builder<?, ?> builder = selectionMenu.createCopy();
+		SelectMenu.Builder<?, ?> builder = builderSupplier.get();
 		buildConsumer.accept(builder);
 		return builder.build();
 	}
@@ -59,7 +63,7 @@ public class ActionSelection<K extends BotAction.ArgKey>
 	 * @see #getSelectionMenu(Consumer)
 	 */
 	public final SelectMenu getSelectMenu() {
-		return selectionMenu;
+		return builderSupplier.get().build();
 	}
 
 	/**
@@ -67,7 +71,7 @@ public class ActionSelection<K extends BotAction.ArgKey>
 	 * executing the action associated with this selection.
 	 * This creates a linked list of any selected values,
 	 * where the next value can be acquired with the {@code nextValueKey} provided in the
-	 * {@link #ActionSelection(SelectMenu, BotAction.ArgKey) constructor}.</p>
+	 * {@link #GenericSelection(Supplier, GenericBotAction.ArgKey) constructor}.</p>
 	 * <p>{@link #getNodeRootValue()} is used to set the value of the root node, and
 	 * {@link #addSelectionArgs(GenericSelectMenuInteractionEvent, Node)}
 	 * is used to add more arguments to the arg node (These methods can be overridden).
@@ -118,6 +122,6 @@ public class ActionSelection<K extends BotAction.ArgKey>
 
 	@Override
 	public boolean identify(String id) {
-		return id != null && id.equalsIgnoreCase(selectionMenu.getId());
+		return this.id.equalsIgnoreCase(id);
 	}
 }

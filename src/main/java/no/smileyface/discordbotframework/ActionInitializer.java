@@ -2,6 +2,7 @@ package no.smileyface.discordbotframework;
 
 import java.util.Collection;
 import no.smileyface.discordbotframework.entities.BotAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>An interface to help creating actions. Usage of this is optional</p>
@@ -17,7 +18,8 @@ public interface ActionInitializer {
 	 * @param manager The {@link ActionManager} of the bot
 	 * @return A list of every action the bot has
 	 */
-	Collection<? extends BotAction<? extends BotAction.ArgKey>> createActions(
+	@NotNull
+	Collection<? extends BotAction<?>> createActions(
 			ActionManager manager
 	);
 }
